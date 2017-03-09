@@ -50,22 +50,22 @@ public class Ziffererkennung {
 
     public void startWithFiles() {
 
-        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/hZiffer5.jpeg");
+        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
         Mat optiimage = optimizeImage(oimg);
         Mat redmask = getRedMask(optiimage);
         ArrayList<Rect> foundRectangles = new ArrayList<>();
         ArrayList<MatOfPoint2f> rectanglepoints = new ArrayList<>();
 
-        findBoundingBox(redmask,foundRectangles,rectanglepoints);
+        findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
         ArrayList<Point> points = new ArrayList<>();
 
-        for (MatOfPoint2f p : rectanglepoints){
+        for (MatOfPoint2f p : rectanglepoints) {
             points.addAll(p.toList());
         }
 
-        Util.drawPoints(redmask,points);
-       // Util.drawRectangles(redmask,foundRectangles);
+        Util.drawPoints(redmask, points);
+        Util.drawRectangles(redmask, foundRectangles);
 
         displayImage("Test", Util.toBufferedImage(redmask), Util.toBufferedImage(oimg));
     }
@@ -74,6 +74,9 @@ public class Ziffererkennung {
         Mat hsv_img = new Mat();
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
+
+
+
         return hsv_img;
     }
 
@@ -82,11 +85,21 @@ public class Ziffererkennung {
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
-        inRange(hsv_img, new Scalar(0, 100, 100), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(160, 100, 100), new Scalar(179, 255, 255), redmask2);
+        inRange(hsv_img, new Scalar(0, 150, 110), new Scalar(10, 255, 255), redmask1);
+        inRange(hsv_img, new Scalar(170, 150, 110), new Scalar(180, 255, 255), redmask2);
 
         Mat retVal = new Mat();
-        addWeighted(redmask1,1.0,redmask2,1.0,0.0,retVal);
+//        addWeighted(redmask1,1.0,redmask2,1.0,0.0,retVal);
+        bitwise_or(redmask1, redmask2, retVal);
+
+
+       /* //morphological opening (remove small objects from the foreground)
+        Imgproc.erode(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
+        Imgproc.dilate(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
+
+        //morphological closing (fill small holes in the foreground)
+        Imgproc.dilate(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
+        Imgproc.erode(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));*/
 
         return retVal;
     }
@@ -109,10 +122,14 @@ public class Ziffererkennung {
                 continue;
 
             Imgproc.approxPolyDP(contour2f, approxcurve, approxdistance, true);
+            MatOfPoint points = new MatOfPoint(approxcurve.toArray());
+
+            Rect te = Imgproc.boundingRect(points);
+
 
             rectanglepoints.add(approxcurve);
 
-            MatOfPoint points = new MatOfPoint(approxcurve.toArray());
+
             foundRectangles.add(Imgproc.boundingRect(points));
         }
     }
