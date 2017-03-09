@@ -3,6 +3,7 @@ package ch.hslu.pren.team8.ziffer;
 import ch.hslu.pren.team8.common.*;
 
 import org.opencv.core.*;
+import org.opencv.core.Point;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
@@ -16,7 +17,7 @@ import static org.opencv.core.Core.inRange;
 import static org.opencv.highgui.Highgui.imread;
 
 /**
- * Created by gebs on 3/3/17.
+ * Klasse in welcher die ganze Ziffererkennung abläuft
  */
 public class Ziffererkennung {
 
@@ -56,9 +57,15 @@ public class Ziffererkennung {
         ArrayList<MatOfPoint2f> rectanglepoints = new ArrayList<>();
 
         findBoundingBox(redmask,foundRectangles,rectanglepoints);
-        Util.drawRectangles(redmask,foundRectangles);
 
+        ArrayList<Point> points = new ArrayList<>();
 
+        for (MatOfPoint2f p : rectanglepoints){
+            points.addAll(p.toList());
+        }
+
+        Util.drawPoints(redmask,points);
+       // Util.drawRectangles(redmask,foundRectangles);
 
         displayImage("Test", Util.toBufferedImage(redmask), Util.toBufferedImage(oimg));
     }
@@ -83,6 +90,7 @@ public class Ziffererkennung {
 
         return retVal;
     }
+
     private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<MatOfPoint2f> rectanglepoints) {
 
         Mat boundingBox = img.clone();

@@ -40,8 +40,14 @@ public class Util {
     public static void drawRectangles(Mat img, ArrayList<Rect> rectangles) {
 
         for (Rect rec : rectangles) {
-            Core.rectangle(img, new Point(rec.x, rec.y), new Point(rec.x + rec.width, rec.y + rec.height), new Scalar(255, 0, 0, 255), 3);
+            Core.rectangle(img, new Point(rec.x, rec.y), new Point(rec.x + rec.width, rec.y + rec.height), new Scalar(255, 0, 0, 255), 1);
         }
 
+    }
+
+    public static void drawPoints(Mat img,ArrayList<Point> points){
+        for(Point p: points){
+            Core.circle(img,p,2, new Scalar(255, 255, 0, 255));
+        }
     }
 }
