@@ -75,8 +75,6 @@ public class Ziffererkennung {
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
 
-
-
         return hsv_img;
     }
 
@@ -85,21 +83,21 @@ public class Ziffererkennung {
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
-        inRange(hsv_img, new Scalar(0, 150, 110), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(170, 150, 110), new Scalar(180, 255, 255), redmask2);
+        inRange(hsv_img, new Scalar(0, 150, 50), new Scalar(10, 255, 255), redmask1);
+        inRange(hsv_img, new Scalar(170, 70, 50), new Scalar(180, 255, 255), redmask2);
 
         Mat retVal = new Mat();
 //        addWeighted(redmask1,1.0,redmask2,1.0,0.0,retVal);
         bitwise_or(redmask1, redmask2, retVal);
 
 
-       /* //morphological opening (remove small objects from the foreground)
+        //morphological opening (remove small objects from the foreground)
         Imgproc.erode(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
         Imgproc.dilate(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
 
         //morphological closing (fill small holes in the foreground)
         Imgproc.dilate(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
-        Imgproc.erode(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));*/
+        Imgproc.erode(retVal,retVal,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
 
         return retVal;
     }
