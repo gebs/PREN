@@ -13,6 +13,7 @@ class RectanglePoints {
     private Point point;
     private PointPosition position;
     private boolean isSinglePoint;
+    RectanglePoints(){}
 
     RectanglePoints(int _id,MatOfPoint2f _points){
         this.id = _id;
@@ -31,7 +32,10 @@ class RectanglePoints {
     MatOfPoint2f getPoints(){
         return points;
     }
-    public void setPoints(MatOfPoint2f _points){
+    PointPosition getPosition(){return position;}
+    void setPoints(MatOfPoint2f _points){
         this.points = points;
     }
+    Point getPoint(){return point;}
+
 }

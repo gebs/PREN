@@ -11,11 +11,15 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.bitwise_or;
 import static org.opencv.core.Core.inRange;
 import static org.opencv.highgui.Highgui.imread;
+import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
+import static org.opencv.imgproc.Imgproc.resize;
+import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 /**
  * Klasse in welcher die ganze Ziffererkennung abläuft
@@ -51,7 +55,7 @@ public class Ziffererkennung {
 
     public void startWithFiles() {
 
-        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_04.jpg");
+        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
         Mat optiimage = optimizeImage(oimg);
         Mat redmask = getRedMask(optiimage);
         ArrayList<Rect> foundRectangles = new ArrayList<>();
@@ -61,10 +65,12 @@ public class Ziffererkennung {
 
         ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
 
+        Mat persCorrect = PerspectiveCorrection(oimg,points);
+
         //Util.drawPoints(oimg, points);
         Util.drawRectangles(redmask, foundRectangles);
 
-        displayImage("Test", Util.toBufferedImage(redmask), Util.toBufferedImage(oimg));
+        displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
     }
 
     public Mat optimizeImage(Mat oImage) {
@@ -166,6 +172,47 @@ public class Ziffererkennung {
             }
         }
         return points;
+    }
+    private static Mat PerspectiveCorrection(Mat oimg, ArrayList<RectanglePoints> rectanglepoints) {
+
+        RectanglePoints tl = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.TOPLEFT).findFirst().orElse(new RectanglePoints());
+        RectanglePoints tr = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.TOPRIGTH).findFirst().orElse(new RectanglePoints());
+        RectanglePoints bl = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.BOTTOMLEFT).findFirst().orElse(new RectanglePoints());
+        RectanglePoints br = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.BOTTOMRIGHT).findFirst().orElse(new RectanglePoints());
+
+        MatOfPoint2f rec = new MatOfPoint2f();
+
+        java.util.List<Point> pts = new ArrayList<>();
+        pts.add(bl.getPoint());
+        pts.add(br.getPoint());
+        pts.add(tr.getPoint());
+        pts.add(tl.getPoint());
+
+        rec.fromList(pts);
+
+        double widthA = Math.sqrt((Math.pow((br.getPoint().x - bl.getPoint().x), 2)) + (Math.pow((br.getPoint().y - bl.getPoint().y), 2)))  ;
+        double widthB = Math.sqrt((Math.pow((tr.getPoint().x - tl.getPoint().x), 2)) + (Math.pow((tr.getPoint().y - tl.getPoint().y), 2)));
+        double maxwidth = Math.max(widthA, widthB);
+
+        double heightA = Math.sqrt((Math.pow((tr.getPoint().x - br.getPoint().x), 2)) + (Math.pow((tr.getPoint().y - br.getPoint().y), 2)));
+        double heightB = Math.sqrt((Math.pow((tl.getPoint().x - bl.getPoint().x), 2)) + (Math.pow((tl.getPoint().y - bl.getPoint().y), 2)));
+        double maxHeight = Math.max(heightA, heightB);
+
+        MatOfPoint2f dst = new MatOfPoint2f();
+        java.util.List<Point> points = new ArrayList<>();
+        points.add(new Point(0, 0));
+        points.add(new Point(maxwidth - 1, 0));
+        points.add(new Point(maxwidth - 1, maxHeight - 1));
+        points.add(new Point(0, maxHeight - 1));
+
+        dst.fromList(points);
+
+        Mat m = getPerspectiveTransform(rec, dst);
+        Mat wraped = new Mat();
+        warpPerspective(oimg, wraped, m, new Size(maxwidth, maxHeight));
+        Mat scaled = new Mat();
+        resize(wraped,scaled,new Size(400,300));
+        return scaled;
     }
 
 
