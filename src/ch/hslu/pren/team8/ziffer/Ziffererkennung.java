@@ -2,16 +2,16 @@ package ch.hslu.pren.team8.ziffer;
 
 import ch.hslu.pren.team8.common.*;
 
+import ch.hslu.pren.team8.debugger.Debugger;
+import ch.hslu.pren.team8.debugger.ImageType;
 import org.opencv.core.*;
 import org.opencv.core.Point;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
-import javax.security.sasl.RealmChoiceCallback;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.bitwise_or;
@@ -34,7 +34,8 @@ public class Ziffererkennung {
     }
 
     public void Start() {
-        startWithFiles();
+        //startWithFiles();
+        StartWithCamera();
     }
 
     public void StartWithCamera() {
@@ -49,15 +50,23 @@ public class Ziffererkennung {
         }
 
         while (runCamera) {
+            Mat frame = new Mat();
+            camera.read(frame);
 
+            Debugger.getInstance().log(frame, ImageType.ORIGINAL);
         }
     }
 
     public void startWithFiles() {
 
         Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
+
+        Debugger.getInstance().log(oimg,ImageType.ORIGINAL);
+
         Mat optiimage = optimizeImage(oimg);
         Mat redmask = getRedMask(optiimage);
+        Debugger.getInstance().log(redmask,ImageType.EDITED);
+
         ArrayList<Rect> foundRectangles = new ArrayList<>();
         ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
 
@@ -67,13 +76,15 @@ public class Ziffererkennung {
 
         Mat persCorrect = PerspectiveCorrection(oimg,points);
 
+        Debugger.getInstance().log(persCorrect,ImageType.EDITED);
         //Util.drawPoints(oimg, points);
         Util.drawRectangles(redmask, foundRectangles);
 
-        displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
+       // displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
     }
 
     public Mat optimizeImage(Mat oImage) {
+        Debugger.getInstance().log("Optimize Image");
         Mat hsv_img = new Mat();
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
