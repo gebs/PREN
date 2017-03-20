@@ -9,9 +9,42 @@ import java.awt.image.BufferedImage;
  * Created by gebs on 3/17/17.
  */
 public class Debugger {
+
     private static Debugger instance;
+    private DebuggerServer server;
+    private static int PORT = 6954;
 
     private Debugger() {
+
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            DebuggerFinder df;
+            boolean found = false;
+
+            @Override
+            public void run() {
+                df = new DebuggerFinder(PORT);
+                while (!found) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                    if (df.getServer() != null) {
+                        server = df.getServer();
+                        found = true;
+                    }
+                }
+                try {
+                    df.stop();
+                    while (!df.canContinue()) {
+                        Thread.sleep(100);
+                    }
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
 
     }
 
@@ -22,22 +55,21 @@ public class Debugger {
         return instance;
     }
 
-    public static void log(String message) {
-        LogMessageText msg = new LogMessageText();
-        msg.setType(MessageType.LogMessage);
-        msg.setLogText(message);
-        new DebuggerSender(msg);
+    public void log(String message, LogLevel logLevel) {
+        if (server != null) {
+            LogMessageText msg = new LogMessageText(logLevel, MessageType.LogMessage, message);
+            new DebuggerSender(msg, server, PORT);
+        }
     }
 
-    public static void log(BufferedImage img, ImageType type) {
-        LogMessageImage msg = new LogMessageImage();
-        msg.setType(MessageType.ImageMessage);
-        msg.setImage(img);
-        msg.setImageType(type);
-        new DebuggerSender(msg);
+    public void log(BufferedImage img, ImageType type, LogLevel logLevel) {
+        if (server != null) {
+            LogMessageImage msg = new LogMessageImage(logLevel, MessageType.ImageMessage, img, type);
+            new DebuggerSender(msg, server, PORT);
+        }
     }
 
-    public static void log(Mat img, ImageType type) {
-        log(Util.toBufferedImage(img),type);
+    public void log(Mat img, ImageType type, LogLevel logLevel) {
+        log(Util.toBufferedImage(img), type, logLevel);
     }
 }

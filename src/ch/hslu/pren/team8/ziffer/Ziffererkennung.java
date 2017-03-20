@@ -4,6 +4,7 @@ import ch.hslu.pren.team8.common.*;
 
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
+import ch.hslu.pren.team8.debugger.LogLevel;
 import org.opencv.core.*;
 import org.opencv.core.Point;
 import org.opencv.highgui.VideoCapture;
@@ -28,14 +29,15 @@ public class Ziffererkennung {
 
     private final boolean useCamera = false;
     private boolean runCamera = false;
+    private Debugger debugger = Debugger.getInstance();
 
     public Ziffererkennung() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     public void Start() {
-        //startWithFiles();
-        StartWithCamera();
+        startWithFiles();
+        //StartWithCamera();
     }
 
     public void StartWithCamera() {
@@ -53,38 +55,42 @@ public class Ziffererkennung {
             Mat frame = new Mat();
             camera.read(frame);
 
-            Debugger.getInstance().log(frame, ImageType.ORIGINAL);
+            debugger.log(frame,ImageType.ORIGINAL, LogLevel.DEBUG);
         }
     }
 
     public void startWithFiles() {
 
-        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
+        while (true) {
+            Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
 
-        Debugger.getInstance().log(oimg,ImageType.ORIGINAL);
+            debugger.log(oimg, ImageType.ORIGINAL, LogLevel.DEBUG);
 
-        Mat optiimage = optimizeImage(oimg);
-        Mat redmask = getRedMask(optiimage);
-        Debugger.getInstance().log(redmask,ImageType.EDITED);
 
-        ArrayList<Rect> foundRectangles = new ArrayList<>();
-        ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
+            Mat optiimage = optimizeImage(oimg);
+            Mat redmask = getRedMask(optiimage);
 
-        findBoundingBox(redmask, foundRectangles, rectanglepoints);
+            debugger.log(oimg, ImageType.EDITED, LogLevel.DEBUG);
 
-        ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
+            ArrayList<Rect> foundRectangles = new ArrayList<>();
+            ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
 
-        Mat persCorrect = PerspectiveCorrection(oimg,points);
+            findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
-        Debugger.getInstance().log(persCorrect,ImageType.EDITED);
-        //Util.drawPoints(oimg, points);
-        Util.drawRectangles(redmask, foundRectangles);
+            ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
 
-       // displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
+            Mat persCorrect = PerspectiveCorrection(oimg, points);
+
+            debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
+            //Util.drawPoints(oimg, points);
+            Util.drawRectangles(redmask, foundRectangles);
+
+            // displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
+        }
     }
 
     public Mat optimizeImage(Mat oImage) {
-        Debugger.getInstance().log("Optimize Image");
+        debugger.log("Optimize Image",LogLevel.DEBUG);
         Mat hsv_img = new Mat();
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);

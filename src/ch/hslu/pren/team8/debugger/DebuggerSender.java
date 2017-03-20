@@ -15,14 +15,17 @@ import java.net.UnknownHostException;
 public class DebuggerSender implements Runnable {
     private Thread thread;
     private LogMessageBase message;
-    private int serverPort = 6784;
     private InetAddress serverIP;
+    private DebuggerServer server;
+    private int serverPort;
 
-    public DebuggerSender(LogMessageBase message) {
+    public DebuggerSender(LogMessageBase message, DebuggerServer server,int port) {
         this.message = message;
+        this.server = server;
+        this.serverPort = port;
 
         try {
-            this.serverIP = InetAddress.getByName("127.0.0.1");
+            this.serverIP = InetAddress.getByName(server.getIpAddress());
         } catch (UnknownHostException ex) {
             System.err.println("Error while resolving hostname in Class MessageSender: " + ex);
         }
@@ -54,7 +57,6 @@ public class DebuggerSender implements Runnable {
                 bScrn.flush();
                 bScrn.close();
 
-                imsg.setImageSize(bScrn.size());
                 out.writeObject(this.message);
                 os.write(imgByte);
 
