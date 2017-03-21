@@ -12,11 +12,13 @@ public class Debugger {
 
     private static Debugger instance;
     private DebuggerServer server;
-    private static int PORT = 6954;
+    private static int PORT = 6955;
 
     private Debugger() {
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        server = new DebuggerServer("127.0.0.1","Localhost");
+
+        /*java.awt.EventQueue.invokeLater(new Runnable() {
             DebuggerFinder df;
             boolean found = false;
 
@@ -29,8 +31,10 @@ public class Debugger {
                     } catch (InterruptedException ex) {
                         ex.printStackTrace();
                     }
-                    if (df.getServer() != null) {
+                    if (df.getServer() != null ) {
                         server = df.getServer();
+                        found = true;
+                    }else if (server != null) {
                         found = true;
                     }
                 }
@@ -43,7 +47,7 @@ public class Debugger {
                     ex.printStackTrace();
                 }
             }
-        });
+        });*/
 
 
     }
