@@ -16,7 +16,7 @@ public class Debugger {
 
     private Debugger() {
 
-        server = new DebuggerServer("127.0.0.1","Localhost");
+        //server = new DebuggerServer("127.0.0.1","Localhost");
 
         java.awt.EventQueue.invokeLater(new Runnable() {
             DebuggerFinder df;
