@@ -13,8 +13,8 @@ public class DebuggerFinder implements Runnable {
 
     private static final int BROADCAST_SLEEP_TIME = 1000; //Time in ms to wait for the next broadcast
     private static final int BYTE_DATA_SIZE = 1024; //size of the UDP packets
-    private static final String DISCOVER_MESSAGE = "LOF_DISCOVER"; //Message for sending broadcast (same as in Class ServerBroadcast)
-    private static final String RESPONSE_MESSAGE = "LOF_RESPONSE"; //Message for receiving broadcast (same as in Class ServerBroadcast)
+    private static final String DISCOVER_MESSAGE = "PREN_T8_DISCOVER"; //Message for sending broadcast (same as in Class ServerBroadcast)
+    private static final String RESPONSE_MESSAGE = "PREN_T8_RESPONSE"; //Message for receiving broadcast (same as in Class ServerBroadcast)
     private static final String BROADCAST_IP = "255.255.255.255"; //Broadcast IP
     private final int port;
 
