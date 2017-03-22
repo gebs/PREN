@@ -70,7 +70,7 @@ public class Ziffererkennung {
             Mat optiimage = optimizeImage(oimg);
             Mat redmask = getRedMask(optiimage);
 
-            debugger.log(oimg, ImageType.EDITED, LogLevel.DEBUG);
+            debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
 
             ArrayList<Rect> foundRectangles = new ArrayList<>();
             ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
@@ -81,7 +81,7 @@ public class Ziffererkennung {
 
             Mat persCorrect = PerspectiveCorrection(oimg, points);
 
-            debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
+           // debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
             //Util.drawPoints(oimg, points);
             Util.drawRectangles(redmask, foundRectangles);
 
@@ -99,7 +99,7 @@ public class Ziffererkennung {
     }
 
     public Mat getRedMask(Mat hsv_img) {
-
+        debugger.log("Finding Redmask",LogLevel.DEBUG);
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
@@ -119,11 +119,13 @@ public class Ziffererkennung {
         Imgproc.dilate(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
         Imgproc.erode(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
 
+
+
         return retVal;
     }
 
     private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<RectanglePoints> rectanglepoints) {
-
+        debugger.log("Finding BoundingBoxes",LogLevel.DEBUG);
         Mat boundingBox = img.clone();
         java.util.List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -150,6 +152,7 @@ public class Ziffererkennung {
 
             foundRectangles.add(Imgproc.boundingRect(points));
         }
+        debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints found",LogLevel.DEBUG);
     }
 
     private ArrayList<RectanglePoints> findEdgePoints(ArrayList<RectanglePoints> recps) {
