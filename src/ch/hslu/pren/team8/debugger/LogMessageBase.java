@@ -7,6 +7,7 @@ import java.util.Date;
  * Created by gebs on 3/17/17.
  */
 public class LogMessageBase implements Serializable{
+    static final long serialVersionUID = -7588980448693010399L;
     private MessageType type;
     private Date logDate;
     private LogLevel logLevel;

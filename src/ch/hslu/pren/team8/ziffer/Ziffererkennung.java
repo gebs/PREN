@@ -28,7 +28,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class Ziffererkennung {
 
     private final boolean useCamera = false;
-    private boolean runCamera = false;
+    private boolean runCamera = true;
     private Debugger debugger = Debugger.getInstance();
 
     public Ziffererkennung() {
@@ -36,8 +36,8 @@ public class Ziffererkennung {
     }
 
     public void Start() {
-        startWithFiles();
-        //StartWithCamera();
+        //startWithFiles();
+        StartWithCamera();
     }
 
     public void StartWithCamera() {
