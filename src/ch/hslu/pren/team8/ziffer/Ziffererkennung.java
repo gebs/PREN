@@ -30,15 +30,15 @@ public class Ziffererkennung {
 
     private final boolean useCamera = false;
     private boolean runCamera = true;
-    private Debugger debugger = Debugger.getInstance();
+    private Debugger debugger = Debugger.getInstance(false);
 
     public Ziffererkennung() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     public void Start() {
-        //startWithFiles();
-        StartWithCamera();
+        startWithFiles();
+        //StartWithCamera();
     }
 
     public void StartWithCamera() {
@@ -82,36 +82,30 @@ public class Ziffererkennung {
 
     public void startWithFiles() {
 
-        while (true) {
-            Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
-
-            debugger.log(oimg, ImageType.ORIGINAL, LogLevel.DEBUG);
+        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/2017_ORIGINAL_Image.png");
 
 
-            Mat optiimage = optimizeImage(oimg);
-            Mat redmask = getRedMask(optiimage);
+        Mat optiimage = optimizeImage(oimg);
+        Mat redmask = getRedMask(optiimage);
 
-            debugger.log(redmask, ImageType.EDITED, LogLevel.DEBUG);
 
-            ArrayList<Rect> foundRectangles = new ArrayList<>();
-            ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
+        ArrayList<Rect> foundRectangles = new ArrayList<>();
+        ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
 
-            findBoundingBox(redmask, foundRectangles, rectanglepoints);
+        findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
-            ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
+        ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
 
-            Mat persCorrect = PerspectiveCorrection(oimg, points);
+        Mat persCorrect = PerspectiveCorrection(oimg, points);
 
-            // debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
-            //Util.drawPoints(oimg, points);
-            Util.drawRectangles(redmask, foundRectangles);
+        Util.drawRectangles(oimg, foundRectangles);
 
-            // displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
-        }
+        displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
+
     }
 
     public Mat optimizeImage(Mat oImage) {
-        debugger.log("Optimize Image", LogLevel.DEBUG);
+       // debugger.log("Optimize Image", LogLevel.DEBUG);
         Mat hsv_img = new Mat();
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
@@ -120,7 +114,7 @@ public class Ziffererkennung {
     }
 
     public Mat getRedMask(Mat hsv_img) {
-        debugger.log("Finding Redmask", LogLevel.DEBUG);
+        //  debugger.log("Finding Redmask", LogLevel.DEBUG);
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
@@ -145,7 +139,7 @@ public class Ziffererkennung {
     }
 
     private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<RectanglePoints> rectanglepoints) {
-        debugger.log("Finding BoundingBoxes", LogLevel.DEBUG);
+        //debugger.log("Finding BoundingBoxes", LogLevel.DEBUG);
         Mat boundingBox = img.clone();
         java.util.List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -216,9 +210,8 @@ public class Ziffererkennung {
 
     private static Mat PerspectiveCorrection(Mat oimg, ArrayList<RectanglePoints> rectanglepoints) {
 
-        System.out.println(rectanglepoints.stream().filter((rp) -> rp == null || rp.getPoint() == null).count());
 
-        if (rectanglepoints.stream().filter((rp) -> rp == null || rp.getPoint() == null).count() < 4) {
+        if (rectanglepoints.stream().filter((rp) -> rp != null && rp.getPoint() != null).count()  > 4) {
             return new Mat();
         }
 
@@ -236,10 +229,7 @@ public class Ziffererkennung {
         pts.add(br.getPoint());
         pts.add(tr.getPoint());
         pts.add(tl.getPoint());
-        System.out.println(pts.get(0));
-        System.out.println(pts.get(1));
-        System.out.println(pts.get(2));
-        System.out.println(pts.get(3));
+
         rec.fromList(pts);
 
         double widthA = Math.sqrt((Math.pow((br.getPoint().x - bl.getPoint().x), 2)) + (Math.pow((br.getPoint().y - bl.getPoint().y), 2)));
@@ -256,7 +246,7 @@ public class Ziffererkennung {
         points.add(new Point(maxwidth - 1, 0));
         points.add(new Point(maxwidth - 1, maxHeight - 1));
         points.add(new Point(0, maxHeight - 1));
-        System.out.println(dst);
+
         dst.fromList(points);
 
         Mat m = getPerspectiveTransform(rec, dst);
