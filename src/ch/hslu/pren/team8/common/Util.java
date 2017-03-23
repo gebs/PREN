@@ -13,6 +13,7 @@ public class Util {
 
     /**
      * Creates a Buffered Image from a Mat image (for Display)
+     *
      * @param m Mat Image
      * @return Buffered Image
      */
@@ -34,7 +35,8 @@ public class Util {
 
     /**
      * Draws an Array of Rectangles onto an Mat Image
-     * @param img Image to draw on
+     *
+     * @param img        Image to draw on
      * @param rectangles Rectangles to draw
      */
     public static void drawRectangles(Mat img, ArrayList<Rect> rectangles) {
@@ -45,9 +47,9 @@ public class Util {
 
     }
 
-    public static void drawPoints(Mat img,ArrayList<Point> points){
-        for(Point p: points){
-            Core.circle(img,p,2, new Scalar(255, 255, 0, 255));
+    public static void drawPoints(Mat img, ArrayList<Point> points) {
+        for (Point p : points) {
+            Core.circle(img, p, 2, new Scalar(255, 255, 0, 255));
         }
     }
 }
