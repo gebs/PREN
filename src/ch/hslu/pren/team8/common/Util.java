@@ -3,7 +3,11 @@ package ch.hslu.pren.team8.common;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 
 /**
@@ -50,6 +54,23 @@ public class Util {
     public static void drawPoints(Mat img, ArrayList<Point> points) {
         for (Point p : points) {
             Core.circle(img, p, 2, new Scalar(255, 255, 0, 255));
+        }
+    }
+
+    /**
+     * Saves the image to the Harddisk
+     * @param image Image to save
+     * @param path Path to save the file to (Without filename)
+     */
+    static void saveImage(Mat image,String path) {
+
+        File file = new File(path + "temp" + Instant.now().getNano()+ ".jpg" );
+
+        try {
+            ImageIO.write(toBufferedImage(image), "jpg", file);  // ignore returned boolean
+        } catch(IOException e) {
+            System.out.println("Write error for " + file.getPath() +
+                    ": " + e.getMessage());
         }
     }
 }
