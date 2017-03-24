@@ -75,6 +75,8 @@ public class Debugger {
     }
 
     public void log(Mat img, ImageType type, LogLevel logLevel) {
-        log(Util.toBufferedImage(img), type, logLevel);
+        if (img.size().height > 0 && img.size().width > 0) {
+            log(Util.toBufferedImage(img), type, logLevel);
+        }
     }
 }
