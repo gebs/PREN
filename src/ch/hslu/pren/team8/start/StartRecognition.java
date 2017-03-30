@@ -24,7 +24,7 @@ public class StartRecognition {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         jsonHandler = JsonHandler.getInstance();
         jsonHandler.setJsonFile("pittProperties.json");
-        debugger = Debugger.getInstance();
+        debugger = Debugger.getInstance(true);
         detector = Detector.getInstance();
         generateCroppingRectangle();
         runVideo();
