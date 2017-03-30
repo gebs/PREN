@@ -14,47 +14,48 @@ public class Debugger {
     private DebuggerServer server;
     private static int PORT = 6955;
 
-    private Debugger() {
+    private Debugger(boolean startDebugger) {
 
-        server = new DebuggerServer("192.168.43.22","ADI");
+        //server = new DebuggerServer("192.168.43.22","ADI");
+        if (startDebugger) {
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            DebuggerFinder df;
-            boolean found = false;
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                DebuggerFinder df;
+                boolean found = false;
 
-            @Override
-            public void run() {
-                df = new DebuggerFinder(PORT);
-                while (!found) {
+                @Override
+                public void run() {
+                    df = new DebuggerFinder(PORT);
+                    while (!found) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        if (df.getServer() != null) {
+                            server = df.getServer();
+                            found = true;
+                        } else if (server != null) {
+                            found = true;
+                        }
+                    }
                     try {
-                        Thread.sleep(1000);
+                        df.stop();
+                        while (!df.canContinue()) {
+                            Thread.sleep(100);
+                        }
                     } catch (InterruptedException ex) {
                         ex.printStackTrace();
                     }
-                    if (df.getServer() != null ) {
-                        server = df.getServer();
-                        found = true;
-                    }else if (server != null) {
-                        found = true;
-                    }
                 }
-                try {
-                    df.stop();
-                    while (!df.canContinue()) {
-                        Thread.sleep(100);
-                    }
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+            });
 
-
+        }
     }
 
-    public static Debugger getInstance() {
+    public static Debugger getInstance(boolean startDebugger) {
         if (instance == null)
-            instance = new Debugger();
+            instance = new Debugger(startDebugger);
 
         return instance;
     }
@@ -74,6 +75,8 @@ public class Debugger {
     }
 
     public void log(Mat img, ImageType type, LogLevel logLevel) {
-        log(Util.toBufferedImage(img), type, logLevel);
+        if (img.size().height > 0 && img.size().width > 0) {
+            log(Util.toBufferedImage(img), type, logLevel);
+        }
     }
 }

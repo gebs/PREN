@@ -14,9 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-import static org.opencv.core.Core.addWeighted;
-import static org.opencv.core.Core.bitwise_or;
-import static org.opencv.core.Core.inRange;
+import static org.opencv.core.Core.*;
+import static org.opencv.highgui.Highgui.IMREAD_ANYCOLOR;
 import static org.opencv.highgui.Highgui.imread;
 import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
 import static org.opencv.imgproc.Imgproc.resize;
@@ -28,19 +27,21 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class Ziffererkennung {
 
     private final boolean useCamera = false;
-    private boolean runCamera = true;
-    private Debugger debugger = Debugger.getInstance();
+    private boolean runCamera = false;
+    private Debugger debugger = Debugger.getInstance(runCamera);
 
     public Ziffererkennung() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
     public void Start() {
-        //startWithFiles();
-        StartWithCamera();
+        if (runCamera)
+            startWithCamera();
+        else
+            startWithFiles();
     }
 
-    public void StartWithCamera() {
+    public void startWithCamera() {
         //Init Kamera
         VideoCapture camera = new VideoCapture(0);
 
@@ -55,42 +56,46 @@ public class Ziffererkennung {
             Mat frame = new Mat();
             camera.read(frame);
 
-            debugger.log(frame,ImageType.ORIGINAL, LogLevel.DEBUG);
+            processImage(frame);
         }
     }
 
+
     public void startWithFiles() {
+        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/2017_ORIGINAL_Image.png");
+        processImage(oimg);
+    }
 
-        while (true) {
-            Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_01.jpg");
+    private void processImage(Mat img) {
 
-            debugger.log(oimg, ImageType.ORIGINAL, LogLevel.DEBUG);
+        Mat rgbImage = new Mat();
+        Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+        debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
 
+        Mat optiimage = optimizeImage(rgbImage);
+        Mat redmask = getRedMask(optiimage);
 
-            Mat optiimage = optimizeImage(oimg);
-            Mat redmask = getRedMask(optiimage);
+        //debugger.log(redmask, ImageType.EDITED, LogLevel.DEBUG);
 
-            debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
+        ArrayList<Rect> foundRectangles = new ArrayList<>();
+        ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
 
-            ArrayList<Rect> foundRectangles = new ArrayList<>();
-            ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
+        findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
-            findBoundingBox(redmask, foundRectangles, rectanglepoints);
+        ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
 
-            ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
+        Mat persCorrect = PerspectiveCorrection(img, points);
 
-            Mat persCorrect = PerspectiveCorrection(oimg, points);
+        debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
 
-           // debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
-            //Util.drawPoints(oimg, points);
-            Util.drawRectangles(redmask, foundRectangles);
+        Util.drawRectangles(redmask, foundRectangles);
 
-            // displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(oimg));
-        }
+        if (runCamera)
+            displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(img));
     }
 
     public Mat optimizeImage(Mat oImage) {
-        debugger.log("Optimize Image",LogLevel.DEBUG);
+        // debugger.log("Optimize Image", LogLevel.DEBUG);
         Mat hsv_img = new Mat();
         Imgproc.medianBlur(oImage, oImage, 3);
         Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
@@ -99,7 +104,7 @@ public class Ziffererkennung {
     }
 
     public Mat getRedMask(Mat hsv_img) {
-        debugger.log("Finding Redmask",LogLevel.DEBUG);
+        //  debugger.log("Finding Redmask", LogLevel.DEBUG);
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
@@ -120,12 +125,11 @@ public class Ziffererkennung {
         Imgproc.erode(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
 
 
-
         return retVal;
     }
 
     private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<RectanglePoints> rectanglepoints) {
-        debugger.log("Finding BoundingBoxes",LogLevel.DEBUG);
+        //debugger.log("Finding BoundingBoxes", LogLevel.DEBUG);
         Mat boundingBox = img.clone();
         java.util.List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -152,7 +156,7 @@ public class Ziffererkennung {
 
             foundRectangles.add(Imgproc.boundingRect(points));
         }
-        debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints found",LogLevel.DEBUG);
+        debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints found", LogLevel.DEBUG);
     }
 
     private ArrayList<RectanglePoints> findEdgePoints(ArrayList<RectanglePoints> recps) {
@@ -166,39 +170,49 @@ public class Ziffererkennung {
                     if (p.y > foundp.y)
                         foundp = p;
                 }
-                points.add(new RectanglePoints(foundp,PointPosition.TOPLEFT));
+                points.add(new RectanglePoints(foundp, PointPosition.TOPLEFT));
                 foundp = testpoints.get(0);
                 //Find Point BottomLeft
                 for (Point p : testpoints) {
                     if (p.y + p.x < foundp.y + foundp.x)
                         foundp = p;
                 }
-                points.add(new RectanglePoints(foundp,PointPosition.BOTTOMLEFT));
-            }else if (rp.getId() == 2){
+                points.add(new RectanglePoints(foundp, PointPosition.BOTTOMLEFT));
+            } else if (rp.getId() == 2) {
                 Point foundp = testpoints.get(0);
                 //Find Point BottomRight
                 for (Point p : testpoints) {
                     if (p.y < foundp.y)
                         foundp = p;
                 }
-                points.add(new RectanglePoints(foundp,PointPosition.BOTTOMRIGHT));
+                points.add(new RectanglePoints(foundp, PointPosition.BOTTOMRIGHT));
                 foundp = testpoints.get(0);
                 //Find Point TopRight
                 for (Point p : testpoints) {
                     if (p.y + p.x > foundp.y + foundp.x)
                         foundp = p;
                 }
-                points.add(new RectanglePoints(foundp,PointPosition.TOPRIGTH));
+                points.add(new RectanglePoints(foundp, PointPosition.TOPRIGTH));
             }
         }
         return points;
     }
+
     private static Mat PerspectiveCorrection(Mat oimg, ArrayList<RectanglePoints> rectanglepoints) {
 
-        RectanglePoints tl = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.TOPLEFT).findFirst().orElse(new RectanglePoints());
-        RectanglePoints tr = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.TOPRIGTH).findFirst().orElse(new RectanglePoints());
-        RectanglePoints bl = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.BOTTOMLEFT).findFirst().orElse(new RectanglePoints());
-        RectanglePoints br = rectanglepoints.stream().filter((rp)-> rp.getPosition() == PointPosition.BOTTOMRIGHT).findFirst().orElse(new RectanglePoints());
+
+        if (rectanglepoints.stream().filter((rp) -> rp != null && rp.getPoint() != null).count() > 4) {
+            return new Mat();
+        }
+
+
+        RectanglePoints tl = rectanglepoints.stream().filter((rp) -> rp.getPosition() == PointPosition.TOPLEFT).findFirst().orElse(new RectanglePoints());
+        RectanglePoints tr = rectanglepoints.stream().filter((rp) -> rp.getPosition() == PointPosition.TOPRIGTH).findFirst().orElse(new RectanglePoints());
+        RectanglePoints bl = rectanglepoints.stream().filter((rp) -> rp.getPosition() == PointPosition.BOTTOMLEFT).findFirst().orElse(new RectanglePoints());
+        RectanglePoints br = rectanglepoints.stream().filter((rp) -> rp.getPosition() == PointPosition.BOTTOMRIGHT).findFirst().orElse(new RectanglePoints());
+
+        if (tl.getPoint() == null || tr.getPoint() == null || bl.getPoint() == null || br.getPoint() == null)
+            return new Mat();
 
         MatOfPoint2f rec = new MatOfPoint2f();
 
@@ -210,7 +224,7 @@ public class Ziffererkennung {
 
         rec.fromList(pts);
 
-        double widthA = Math.sqrt((Math.pow((br.getPoint().x - bl.getPoint().x), 2)) + (Math.pow((br.getPoint().y - bl.getPoint().y), 2)))  ;
+        double widthA = Math.sqrt((Math.pow((br.getPoint().x - bl.getPoint().x), 2)) + (Math.pow((br.getPoint().y - bl.getPoint().y), 2)));
         double widthB = Math.sqrt((Math.pow((tr.getPoint().x - tl.getPoint().x), 2)) + (Math.pow((tr.getPoint().y - tl.getPoint().y), 2)));
         double maxwidth = Math.max(widthA, widthB);
 
@@ -231,7 +245,7 @@ public class Ziffererkennung {
         Mat wraped = new Mat();
         warpPerspective(oimg, wraped, m, new Size(maxwidth, maxHeight));
         Mat scaled = new Mat();
-        resize(wraped,scaled,new Size(400,300));
+        resize(wraped, scaled, new Size(400, 300));
         return scaled;
     }
 
