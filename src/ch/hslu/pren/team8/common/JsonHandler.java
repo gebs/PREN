@@ -8,8 +8,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by Peter Gisler on 23.03.17
@@ -21,11 +21,18 @@ public class JsonHandler {
     private JSONParser parser;
     private JSONObject rootObject;
 
+    /**
+     * private constructor
+     */
     private JsonHandler() {
         parser = new JSONParser();
-        rootObject = getRootObject();
     }
 
+    /**
+     * Singleton pattern implementation
+     *
+     * @return single instance of JsonHandler class
+     */
     public static JsonHandler getInstance() {
         if (jsonHandler == null) {
             jsonHandler = new JsonHandler();
@@ -33,8 +40,19 @@ public class JsonHandler {
         return jsonHandler;
     }
 
+    /**
+     * Returns root json object.
+     * If no file is set, an exception will be thrown
+     *
+     * @return root json object in specified file
+     */
     private JSONObject getRootObject() {
         Object obj = null;
+
+        if (jsonFile == null) {
+            throw new InvalidParameterException("No file is set for json handler!");
+        }
+
         try {
             obj = parser.parse(new FileReader(jsonFile));
         } catch (IOException | ParseException e) {
@@ -43,27 +61,64 @@ public class JsonHandler {
         return (JSONObject) obj;
     }
 
+    /**
+     * Returns an integer value for the specified property path.
+     * Root json object is starting point of path traversal.
+     *
+     * @param propertyPath Path, parts separated with "."
+     * @return integer value at specified path
+     */
     public int getInt(String propertyPath) {
         return getInt(rootObject, getPathList(propertyPath));
     }
 
+    /**
+     * Returns an integer value for the specified property path.
+     * Given json object is starting point of path traversal.
+     *
+     * @param object       Object to traverse with specified path
+     * @param propertyPath traversal path, parts separated with "."
+     * @return integer value at specified path
+     */
     public int getInt(JSONObject object, String propertyPath) {
-        List<String> pathArray = getPathList(propertyPath);
+        ArrayList<String> pathArray = getPathList(propertyPath);
         return getInt(object, pathArray);
     }
 
-    private int getInt(JSONObject object, List<String> propertyPath) {
+    /**
+     * Retrieves an integer value from the specified object
+     *
+     * @param object       object to retrieve integer value from
+     * @param propertyPath property path, split into separate parts
+     * @return integer value of object at specified path
+     */
+    private int getInt(JSONObject object, ArrayList<String> propertyPath) {
         if (propertyPath.size() > 1) {
-            return getInt(getObject(object, propertyPath.remove(0)), propertyPath);
+            String key = propertyPath.remove(0);
+            return getInt(getObject(object, key), propertyPath);
         } else {
             return (int) (long) object.get(propertyPath.get(0));
         }
     }
 
-    private List<String> getPathList(String path) {
-        return Arrays.asList(path.split("."));
+    /**
+     * Converts a dot-separated path string into a list of path fragments
+     *
+     * @param path dot-separated path
+     * @return list with string item path fragments
+     */
+    private ArrayList<String> getPathList(String path) {
+        String[] pathArray = path.split("[.]");
+        return new ArrayList<>(Arrays.asList(pathArray));
     }
 
+    /**
+     * Returns a json object from the given object at the specified key
+     *
+     * @param object the object to retrieve the json object from
+     * @param key    the key of the object to return
+     * @return the requested object :-)
+     */
     public JSONObject getObject(JSONObject object, String key) {
         if (!object.containsKey(key)) {
             throw new InvalidParameterException("The given object contains no key named '" + key + "'");
@@ -71,18 +126,34 @@ public class JsonHandler {
         return (JSONObject) object.get(key);
     }
 
+    /**
+     * Sets the json handlers json file
+     *
+     * @param jsonFile the json file to set
+     */
     public void setJsonFile(File jsonFile) {
         this.jsonFile = jsonFile;
         rootObject = getRootObject();
     }
 
+    /**
+     * Sets the json handlers json file by file path
+     *
+     * @param relativePath path of file, relative to the users home directory
+     */
     public void setJsonFile(String relativePath) {
-        this.jsonFile = new File(getPathRelativeToUserHome(relativePath));
+        jsonFile = new File(getPathRelativeToUserHome(relativePath));
         rootObject = getRootObject();
     }
 
+    /**
+     * Gets an absolute file path of a given path relative to the users home directory
+     *
+     * @param relativePath path, relative to the users home directory
+     * @return absolute file path
+     */
     private String getPathRelativeToUserHome(String relativePath) {
         String userHome = System.getProperty("user.home");
-        return userHome + relativePath;
+        return userHome + File.separator + relativePath;
     }
 }

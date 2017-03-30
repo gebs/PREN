@@ -59,18 +59,31 @@ public class Util {
 
     /**
      * Saves the image to the Harddisk
+     *
      * @param image Image to save
-     * @param path Path to save the file to (Without filename)
+     * @param path  Path to save the file to (Without filename)
      */
-    static void saveImage(Mat image,String path) {
+    static void saveImage(Mat image, String path) {
 
-        File file = new File(path + "temp" + Instant.now().getNano()+ ".jpg" );
+        File file = new File(path + "temp" + Instant.now().getNano() + ".jpg");
 
         try {
             ImageIO.write(toBufferedImage(image), "jpg", file);  // ignore returned boolean
-        } catch(IOException e) {
+        } catch (IOException e) {
             System.out.println("Write error for " + file.getPath() +
                     ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Converts an image in BGR format to HSV format and returns the converted hsv Mat
+     *
+     * @param raw BGR input image
+     * @return converted HSV image
+     */
+    public static Mat toHsv(Mat raw) {
+        Mat hsvImage = new Mat();
+        Imgproc.cvtColor(raw, hsvImage, Imgproc.COLOR_BGR2HSV);
+        return hsvImage;
     }
 }
