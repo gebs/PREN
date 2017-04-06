@@ -35,6 +35,13 @@ public class Ziffererkennung {
     }
 
     public void Start() {
+
+        SVM.Init(5);
+        SVM.trainPositive();
+        SVM.trainNegative();
+        SVM.train();
+
+
         if (runCamera)
             startWithCamera();
         else
@@ -62,14 +69,20 @@ public class Ziffererkennung {
 
 
     public void startWithFiles() {
-        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/2017_ORIGINAL_Image.png");
+        Mat oimg = imread("/home/gebs/Projects/PREN 2/PREN/resources/Images/p4_02.jpg");
+
         processImage(oimg);
     }
 
     private void processImage(Mat img) {
 
         Mat rgbImage = new Mat();
-        Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+        if (runCamera) {
+            Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+        }else{
+            rgbImage = img;
+        }
+
         debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
 
         Mat optiimage = optimizeImage(rgbImage);
@@ -89,8 +102,8 @@ public class Ziffererkennung {
         debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
 
         Util.drawRectangles(redmask, foundRectangles);
-
-        if (runCamera)
+        SVM.test(persCorrect);
+        if (!runCamera)
             displayImage("Test", Util.toBufferedImage(persCorrect), Util.toBufferedImage(img));
     }
 
@@ -112,7 +125,6 @@ public class Ziffererkennung {
         inRange(hsv_img, new Scalar(170, 65, 50), new Scalar(180, 255, 255), redmask2);
 
         Mat retVal = new Mat();
-//        addWeighted(redmask1,1.0,redmask2,1.0,0.0,retVal);
         bitwise_or(redmask1, redmask2, retVal);
 
 

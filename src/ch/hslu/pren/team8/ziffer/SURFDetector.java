@@ -11,10 +11,11 @@ import java.util.List;
 /**
  * Created by gebs on 3/24/17.
  */
+@Deprecated
 public class SURFDetector {
-    public SURFDetector(){
-        String bookObject = "images//bookobject.jpg";
-        String bookScene = "images//bookscene.jpg";
+    public SURFDetector() {
+        String bookObject = "/home/gebs/Projects/PREN 2/PREN/resources/Images/II-s.jpg";
+        String bookScene = "/home/gebs/Projects/PREN 2/PREN/resources/Images/II.jpg";
 
         System.out.println("Started....");
         System.out.println("Loading images...");
@@ -71,8 +72,8 @@ public class SURFDetector {
 
             }
         }
-
-        if (goodMatchesList.size() >= 7) {
+        System.out.println("Found Size: " + goodMatchesList.size());
+        if (goodMatchesList.size() >= 30) {
             System.out.println("Object Found!!!");
 
             List<KeyPoint> objKeypointlist = objectKeyPoints.toList();
@@ -117,9 +118,9 @@ public class SURFDetector {
 
             Features2d.drawMatches(objectImage, objectKeyPoints, sceneImage, sceneKeyPoints, goodMatches, matchoutput, matchestColor, newKeypointColor, new MatOfByte(), 2);
 
-            Highgui.imwrite("output//outputImage.jpg", outputImage);
-            Highgui.imwrite("output//matchoutput.jpg", matchoutput);
-            Highgui.imwrite("output//img.jpg", img);
+            Highgui.imwrite("/home/gebs/Projects/PREN 2/PREN/resources/Images/outputImage.jpg", outputImage);
+            Highgui.imwrite("/home/gebs/Projects/PREN 2/PREN/resources/Images/matchoutput.jpg", matchoutput);
+            Highgui.imwrite("/home/gebs/Projects/PREN 2/PREN/resources/Images/img.jpg", img);
         } else {
             System.out.println("Object Not Found");
         }
