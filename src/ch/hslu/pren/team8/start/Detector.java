@@ -1,8 +1,17 @@
 package ch.hslu.pren.team8.start;
 
+import ch.hslu.pren.team8.common.JsonHandler;
 import ch.hslu.pren.team8.common.Util;
+import ch.hslu.pren.team8.debugger.Debugger;
+import ch.hslu.pren.team8.debugger.LogLevel;
+import org.json.simple.JSONObject;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Peter Gisler on 23.03.17
@@ -10,35 +19,25 @@ import org.opencv.imgproc.Imgproc;
 public class Detector {
 
     private static Detector instance;
+    private Debugger debugger;
+    private boolean runDebugger;
 
-    private double sensitivity = 50.0;
-    private int blurFactor = 15;
+    private HashMap<String, Scalar[]> hueRanges;
+    private HashMap<String, Integer> spotCounter;
 
     private void Detector() {
         // private constructor for implementing singleton pattern
+        initializeHueRanges();
     }
 
-    public static Detector getInstance() {
+    public static Detector getInstance(boolean runDebugger) {
         if (instance == null) {
             instance = new Detector();
+            instance.initializeHueRanges();
+            instance.debugger = Debugger.getInstance(runDebugger);
+            instance.runDebugger = runDebugger;
         }
         return instance;
-    }
-
-    public double getSensitivity() {
-        return sensitivity;
-    }
-
-    public void setSensitivity(double sensitivity) {
-        this.sensitivity = sensitivity;
-    }
-
-    public int getBlurFactor() {
-        return blurFactor;
-    }
-
-    public void setBlurFactor(int blurFactor) {
-        this.blurFactor = blurFactor;
     }
 
     /**
@@ -49,39 +48,64 @@ public class Detector {
      */
     public Mat detect(Mat inputImage) {
         // blur image
-        Imgproc.medianBlur(inputImage, inputImage, blurFactor);
+        Imgproc.medianBlur(inputImage, inputImage, 7);
 
         // convert input image to HSV
         Mat image = Util.toHsv(inputImage);
 
-        // threshold image for everything that is not red
-        thresholdColor(image);
+        if (hueRanges == null) {
+            initializeHueRanges();
+        }
 
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(image, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, sensitivity, 0, 0);
+        // loop over every color range to detect
+        for (Map.Entry<String, Scalar[]> entry : hueRanges.entrySet()) {
+            String rangeName = entry.getKey();
+            Mat maskedImage = thresholdColor(image, entry.getValue());
 
-        // Loop over all detected circles and outline them on the original image
-        if (!circles.empty()) {
-            for (int index = 0; index < circles.cols(); index++) {
-                Point center = new Point(circles.get(0, index)[0], circles.get(0, index)[1]);
-                double radius = circles.get(0, index)[2];
-                Core.circle(inputImage, center, (int) radius, new Scalar(0, 255, 0), 5);
-            }
+            Mat circles = new Mat();
+            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, 5.0, 1, 8);
+
+            spotCounter.replace(rangeName, circles.cols());
+            markCircles(inputImage, circles);
+        }
+
+        String logMessage = "RED: " + spotCounter.get("red") + " | GREEN: " + spotCounter.get("green");
+        if (runDebugger) {
+            debugger.log(logMessage, LogLevel.INFO);
+        } else {
+            System.out.println(logMessage);
         }
 
         return inputImage;
     }
 
-    private void thresholdColor(Mat image) {
-        Mat lowerHue = new Mat();
-        Mat upperHue = new Mat();
-        Core.inRange(image, new Scalar(0, 70, 50), new Scalar(10, 255, 255), lowerHue);
-        Core.inRange(image, new Scalar(170, 70, 50), new Scalar(180, 255, 255), upperHue);
-
-        // combine the two partial images
-        Core.addWeighted(lowerHue, 1.0, upperHue, 1.0, 0.0, image);
-        Imgproc.GaussianBlur(image, image, new Size(15.0, 15.0), 2.0, 2.0);
+    private Mat thresholdColor(Mat image, Scalar[] hueRange) {
+        Mat range = new Mat();
+        Core.inRange(image, hueRange[0], hueRange[1], range);
+        Imgproc.GaussianBlur(range, range, new Size(15.0, 15.0), 2.0, 2.0);
+        return range;
     }
 
+    private void initializeHueRanges() {
+        Scalar[] redHueRange = new Scalar[]{new Scalar(170, 70, 50), new Scalar(180, 255, 255)};
+        Scalar[] greenHueRange = new Scalar[]{new Scalar(50, 100, 80), new Scalar(70, 255, 255)};
 
+        hueRanges = new HashMap<>();
+        hueRanges.put("red", redHueRange);
+        hueRanges.put("green", greenHueRange);
+
+        spotCounter = new HashMap<>();
+        spotCounter.put("red", 0);
+        spotCounter.put("green", 0);
+    }
+
+    private void markCircles(Mat image, Mat circles) {
+        if (!circles.empty()) {
+            for (int col = 0; col < circles.cols(); col++) {
+                double[] circle = circles.get(0, col);
+                Point center = new Point(circle[0], circle[1]);
+                Core.circle(image, center, (int) circle[2], new Scalar(255, 0, 0), 2);
+            }
+        }
+    }
 }

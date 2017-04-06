@@ -1,9 +1,12 @@
 package ch.hslu.pren.team8.common;
 
 import org.opencv.core.*;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +67,6 @@ public class Util {
      * @param path  Path to save the file to (Without filename)
      */
     static void saveImage(Mat image, String path) {
-
         File file = new File(path + "temp" + Instant.now().getNano() + ".jpg");
 
         try {
@@ -85,5 +87,23 @@ public class Util {
         Mat hsvImage = new Mat();
         Imgproc.cvtColor(raw, hsvImage, Imgproc.COLOR_BGR2HSV);
         return hsvImage;
+    }
+
+    public static void showImage(String title, Mat image) {
+        showImage(title, toBufferedImage(image));
+    }
+
+    public static void showImage(String title, Image image) {
+        ImageIcon icon = new ImageIcon(image);
+        JLabel lbl = new JLabel(icon);
+        JPanel panel = new JPanel();
+        panel.add(lbl);
+
+        JFrame frame = new JFrame(title);
+        frame.setSize(400, 400);
+        frame.add(panel);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
     }
 }

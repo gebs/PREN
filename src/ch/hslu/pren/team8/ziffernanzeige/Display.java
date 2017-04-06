@@ -12,8 +12,8 @@ public class Display {
     final private static Pin LED1_PIN = RaspiPin.GPIO_01;
     final private static Pin LED2_PIN = RaspiPin.GPIO_02;
     final private static Pin LED3_PIN = RaspiPin.GPIO_03;
-    final private static Pin LED4_PIN = RaspiPin.GPIO_04;
-    final private static Pin LED5_PIN = RaspiPin.GPIO_05;
+    final private static Pin LED4_PIN = RaspiPin.GPIO_06;
+    final private static Pin LED5_PIN = RaspiPin.GPIO_07;
 
     private GpioPinDigitalOutput led1;
     private GpioPinDigitalOutput led2;
@@ -94,16 +94,16 @@ public class Display {
         ArrayList<GpioPinDigitalOutput> activeLeds = getActiveLeds(digit);
         turnAllLedsOff();
         for (GpioPinDigitalOutput led : activeLeds) {
-            led.high();
+            led.low();
         }
     }
 
-    private void turnAllLedsOff() {
-        led1.low();
-        led2.low();
-        led3.low();
-        led4.low();
-        led5.low();
+    public void turnAllLedsOff() {
+        led1.high();
+        led2.high();
+        led3.high();
+        led4.high();
+        led5.high();
     }
 
     private ArrayList<GpioPinDigitalOutput> getActiveLeds(int digit) {

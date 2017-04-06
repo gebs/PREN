@@ -1,13 +1,20 @@
 package ch.hslu.pren.team8.start;
 
 import ch.hslu.pren.team8.common.JsonHandler;
+import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
+import org.opencv.imgproc.Imgproc;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.net.URL;
 
 public class StartRecognition {
 
@@ -15,7 +22,12 @@ public class StartRecognition {
     private Rect croppingRectangle;
     private JsonHandler jsonHandler;
     private Detector detector;
-    private boolean runCamera = false;
+
+    private boolean runCamera = true;
+    private boolean runDebugger = true;
+
+    private final static int PI_IMAGE_WIDTH = 640;
+    private final static int PI_IMAGE_HEIGHT = 480;
 
     /**
      * This method initializes the process of start signal detection
@@ -24,10 +36,18 @@ public class StartRecognition {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         jsonHandler = JsonHandler.getInstance();
         jsonHandler.setJsonFile("pittProperties.json");
-        debugger = Debugger.getInstance(true);
-        detector = Detector.getInstance();
+        detector = Detector.getInstance(runDebugger);
         generateCroppingRectangle();
-        runVideo();
+
+        if (runDebugger) {
+            debugger = Debugger.getInstance(runDebugger);
+        }
+
+        if (runCamera) {
+            runVideo();
+        } else {
+            runStatic();
+        }
     }
 
     /**
@@ -39,8 +59,22 @@ public class StartRecognition {
         int y = (int) (long) jsonHandler.getInt("trafficLightDimensions.y");
         int width = (int) (long) jsonHandler.getInt("trafficLightDimensions.width");
         int height = (int) (long) jsonHandler.getInt("trafficLightDimensions.height");
+
+        if (x + width > PI_IMAGE_WIDTH) {
+            width = PI_IMAGE_WIDTH - x;
+        }
+
+        if (y + height > PI_IMAGE_HEIGHT) {
+            height = PI_IMAGE_HEIGHT - x;
+        }
+
         croppingRectangle = new Rect(x, y, width, height);
-        debugger.log("Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height, LogLevel.INFO);
+
+        String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
+
+        if (debugger != null) {
+            debugger.log(logMessage, LogLevel.INFO);
+        }
     }
 
     private void runVideo() {
@@ -55,10 +89,12 @@ public class StartRecognition {
         }
 
         Mat frame = new Mat();
-        Mat croppedFrame = new Mat();
+        Mat croppedFrame;
+        Mat rgbImage = new Mat();
         while (runCamera) {
             camera.read(frame);
-            debugger.log(frame, ImageType.ORIGINAL, LogLevel.DEBUG);
+            Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
+            debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
 
             croppedFrame = frame.submat(croppingRectangle);
             croppedFrame = detector.detect(croppedFrame);
@@ -67,4 +103,21 @@ public class StartRecognition {
         }
     }
 
+    private void runStatic() {
+        URL[] urls = new URL[]{
+                this.getClass().getResource("/Images/st_01_r.png"),
+                this.getClass().getResource("/Images/st_01_g.png")
+        };
+
+        Mat workingCopy;
+        for (URL url : urls) {
+            File file = new File(url.getFile());
+            Mat inputImage = Highgui.imread(file.getAbsolutePath());
+
+            workingCopy = inputImage.submat(croppingRectangle);
+            workingCopy = detector.detect(workingCopy);
+
+            Util.showImage("Working copy", workingCopy);
+        }
+    }
 }

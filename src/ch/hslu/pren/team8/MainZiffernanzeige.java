@@ -11,6 +11,7 @@ public class MainZiffernanzeige {
 
     public static void main(String[] args) throws InterruptedException {
         Display display = new Display();
+        display.turnAllLedsOff();
 
         for (int i = 0; i < 10; i++) {
             int randomDigit = ThreadLocalRandom.current().nextInt(1, 6);
@@ -19,5 +20,6 @@ public class MainZiffernanzeige {
             Thread.sleep(2000);
         }
 
+        display.turnAllLedsOff();
     }
 }

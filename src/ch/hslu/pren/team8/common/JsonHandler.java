@@ -113,6 +113,16 @@ public class JsonHandler {
     }
 
     /**
+     * Returns a json object from the root object at the specified key
+     *
+     * @param key the key of the object to return
+     * @return the requested object within the root object
+     */
+    public JSONObject getObject(String key) {
+        return getObject(rootObject, key);
+    }
+
+    /**
      * Returns a json object from the given object at the specified key
      *
      * @param object the object to retrieve the json object from
