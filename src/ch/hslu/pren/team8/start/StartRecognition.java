@@ -12,19 +12,18 @@ import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
 
 public class StartRecognition {
 
+    private boolean runCamera = true;
+    private boolean runDebugger = true;
+
     private Debugger debugger;
     private Rect croppingRectangle;
     private JsonHandler jsonHandler;
     private Detector detector;
-
-    private boolean runCamera = true;
-    private boolean runDebugger = true;
 
     private final static int PI_IMAGE_WIDTH = 640;
     private final static int PI_IMAGE_HEIGHT = 480;
@@ -60,6 +59,15 @@ public class StartRecognition {
         int width = (int) (long) jsonHandler.getInt("trafficLightDimensions.width");
         int height = (int) (long) jsonHandler.getInt("trafficLightDimensions.height");
 
+        String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
+        System.out.println(logMessage);
+
+        if (runDebugger) {
+            debugger.log(logMessage, LogLevel.INFO);
+        } else {
+            System.out.println(logMessage);
+        }
+
         if (x + width > PI_IMAGE_WIDTH) {
             width = PI_IMAGE_WIDTH - x;
         }
@@ -70,11 +78,7 @@ public class StartRecognition {
 
         croppingRectangle = new Rect(x, y, width, height);
 
-        String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
 
-        if (debugger != null) {
-            debugger.log(logMessage, LogLevel.INFO);
-        }
     }
 
     private void runVideo() {
@@ -94,12 +98,16 @@ public class StartRecognition {
         while (runCamera) {
             camera.read(frame);
             Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
-            debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
+            if (runDebugger) {
+                debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
+            }
 
             croppedFrame = frame.submat(croppingRectangle);
             croppedFrame = detector.detect(croppedFrame);
 
-            debugger.log(croppedFrame, ImageType.EDITED, LogLevel.DEBUG);
+            if (runDebugger) {
+                debugger.log(croppedFrame, ImageType.EDITED, LogLevel.DEBUG);
+            }
         }
     }
 

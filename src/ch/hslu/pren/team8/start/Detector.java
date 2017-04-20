@@ -24,6 +24,7 @@ public class Detector {
 
     private HashMap<String, Scalar[]> hueRanges;
     private HashMap<String, Integer> spotCounter;
+    private ArrayList<HashMap<String, Integer>> spotCounterHistory;
 
     private void Detector() {
         // private constructor for implementing singleton pattern
@@ -57,6 +58,8 @@ public class Detector {
             initializeHueRanges();
         }
 
+        spotCounterHistory.add(spotCounter);
+
         // loop over every color range to detect
         for (Map.Entry<String, Scalar[]> entry : hueRanges.entrySet()) {
             String rangeName = entry.getKey();
@@ -70,10 +73,11 @@ public class Detector {
         }
 
         String logMessage = "RED: " + spotCounter.get("red") + " | GREEN: " + spotCounter.get("green");
-        if (runDebugger) {
-            debugger.log(logMessage, LogLevel.INFO);
-        } else {
-            System.out.println(logMessage);
+        log(logMessage);
+
+        HashMap<String, Integer> lastHistoryEntry = spotCounterHistory.get(0);
+        if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
+            log("**** GO, GO, GO ****");
         }
 
         return inputImage;
@@ -97,6 +101,8 @@ public class Detector {
         spotCounter = new HashMap<>();
         spotCounter.put("red", 0);
         spotCounter.put("green", 0);
+
+        spotCounterHistory = new ArrayList<>();
     }
 
     private void markCircles(Mat image, Mat circles) {
@@ -106,6 +112,18 @@ public class Detector {
                 Point center = new Point(circle[0], circle[1]);
                 Core.circle(image, center, (int) circle[2], new Scalar(255, 0, 0), 2);
             }
+        }
+    }
+
+    private void log(String message) {
+        log(message, LogLevel.INFO);
+    }
+
+    private void log(String message, LogLevel level) {
+        if (runDebugger) {
+            debugger.log(message, level);
+        } else {
+            System.out.println(message);
         }
     }
 }
