@@ -17,8 +17,8 @@ import java.net.URL;
 
 public class StartRecognition {
 
-    private boolean runCamera = true;
-    private boolean runDebugger = true;
+    private boolean runCamera = false;
+    private boolean runDebugger = false;
 
     private Debugger debugger;
     private Rect croppingRectangle;
@@ -36,11 +36,12 @@ public class StartRecognition {
         jsonHandler = JsonHandler.getInstance();
         jsonHandler.setJsonFile("pittProperties.json");
         detector = Detector.getInstance(runDebugger);
-        generateCroppingRectangle();
 
         if (runDebugger) {
             debugger = Debugger.getInstance(runDebugger);
         }
+
+        generateCroppingRectangle();
 
         if (runCamera) {
             runVideo();
@@ -59,15 +60,6 @@ public class StartRecognition {
         int width = (int) (long) jsonHandler.getInt("trafficLightDimensions.width");
         int height = (int) (long) jsonHandler.getInt("trafficLightDimensions.height");
 
-        String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
-        System.out.println(logMessage);
-
-        if (runDebugger) {
-            debugger.log(logMessage, LogLevel.INFO);
-        } else {
-            System.out.println(logMessage);
-        }
-
         if (x + width > PI_IMAGE_WIDTH) {
             width = PI_IMAGE_WIDTH - x;
         }
@@ -76,9 +68,15 @@ public class StartRecognition {
             height = PI_IMAGE_HEIGHT - x;
         }
 
+        String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
+
+        if (runDebugger) {
+            debugger.log(logMessage, LogLevel.INFO);
+        } else {
+            System.out.println(logMessage);
+        }
+
         croppingRectangle = new Rect(x, y, width, height);
-
-
     }
 
     private void runVideo() {
@@ -112,20 +110,26 @@ public class StartRecognition {
     }
 
     private void runStatic() {
-        URL[] urls = new URL[]{
-                this.getClass().getResource("/Images/st_01_r.png"),
-                this.getClass().getResource("/Images/st_01_g.png")
-        };
+        String basePathStart = "/Images/startTest/test_";
+        String basePathEnd = ".png";
+
+        URL[] urls = new URL[45];
+
+        for (int i = 1; i <= 45; i++) {
+            urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
+        }
 
         Mat workingCopy;
+        int counter = 1;
         for (URL url : urls) {
             File file = new File(url.getFile());
             Mat inputImage = Highgui.imread(file.getAbsolutePath());
 
+            System.out.println(counter);
             workingCopy = inputImage.submat(croppingRectangle);
             workingCopy = detector.detect(workingCopy);
 
-            Util.showImage("Working copy", workingCopy);
+            Util.showImage("Working copy #" + counter++, workingCopy);
         }
     }
 }

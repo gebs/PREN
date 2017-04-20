@@ -49,7 +49,7 @@ public class Detector {
      */
     public Mat detect(Mat inputImage) {
         // blur image
-        Imgproc.medianBlur(inputImage, inputImage, 7);
+        Imgproc.medianBlur(inputImage, inputImage, 1);
 
         // convert input image to HSV
         Mat image = Util.toHsv(inputImage);
@@ -58,7 +58,7 @@ public class Detector {
             initializeHueRanges();
         }
 
-        spotCounterHistory.add(spotCounter);
+        spotCounterHistory.add((HashMap<String, Integer>) spotCounter.clone());
 
         // loop over every color range to detect
         for (Map.Entry<String, Scalar[]> entry : hueRanges.entrySet()) {
@@ -66,7 +66,7 @@ public class Detector {
             Mat maskedImage = thresholdColor(image, entry.getValue());
 
             Mat circles = new Mat();
-            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, 5.0, 1, 8);
+            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, 5.0, 6, 12);
 
             spotCounter.replace(rangeName, circles.cols());
             markCircles(inputImage, circles);
@@ -75,9 +75,11 @@ public class Detector {
         String logMessage = "RED: " + spotCounter.get("red") + " | GREEN: " + spotCounter.get("green");
         log(logMessage);
 
-        HashMap<String, Integer> lastHistoryEntry = spotCounterHistory.get(0);
-        if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
-            log("**** GO, GO, GO ****");
+        if (spotCounterHistory.size() >= 1) {
+            HashMap<String, Integer> lastHistoryEntry = spotCounterHistory.get(spotCounterHistory.size() - 1);
+            if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
+                log("**** GO, GO, GO ****");
+            }
         }
 
         return inputImage;
