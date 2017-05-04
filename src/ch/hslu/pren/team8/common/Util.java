@@ -77,16 +77,34 @@ public class Util {
         }
     }
 
+    public static Mat increaseBrightness(Mat image, double alpha, double beta) {
+        Mat optimizedImage = new Mat();
+        image.convertTo(optimizedImage, -1, alpha, beta);
+        return optimizedImage;
+    }
+
     /**
      * Converts an image in BGR format to HSV format and returns the converted hsv Mat
      *
      * @param raw BGR input image
      * @return converted HSV image
      */
-    public static Mat toHsv(Mat raw) {
+    public static Mat bgrToHsv(Mat raw) {
         Mat hsvImage = new Mat();
         Imgproc.cvtColor(raw, hsvImage, Imgproc.COLOR_BGR2HSV);
         return hsvImage;
+    }
+
+    /**
+     * Converts an image in HSV format to RGB format and returns the converted rgb Mat
+     *
+     * @param raw HSV input image
+     * @return converted RGB image
+     */
+    public static Mat hsvToRgb(Mat raw) {
+        Mat rgbImage = new Mat();
+        Imgproc.cvtColor(raw, rgbImage, Imgproc.COLOR_HSV2RGB);
+        return rgbImage;
     }
 
     public static void showImage(String title, Mat image) {

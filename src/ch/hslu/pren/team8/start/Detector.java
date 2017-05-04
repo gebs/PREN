@@ -1,16 +1,14 @@
 package ch.hslu.pren.team8.start;
 
-import ch.hslu.pren.team8.common.JsonHandler;
 import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import org.json.simple.JSONObject;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,12 +20,14 @@ public class Detector {
     private Debugger debugger;
     private boolean runDebugger;
 
-    private HashMap<String, Scalar[]> hueRanges;
+    private Map<String, Scalar[]> hueRanges;
     private HashMap<String, Integer> spotCounter;
-    private ArrayList<HashMap<String, Integer>> spotCounterHistory;
+    private List<Map<String, Integer>> spotCounterHistory;
 
-    private void Detector() {
-        // private constructor for implementing singleton pattern
+    /**
+     * Private constructor for implementing singleton pattern
+     */
+    private Detector() {
         initializeHueRanges();
     }
 
@@ -42,28 +42,27 @@ public class Detector {
     }
 
     /**
-     * Detect red circles in provided input Image
+     * Detect circles of specific colors in the provided input image
      *
      * @param inputImage The input image to be processed
      * @return the processed image with marked circles
      */
     public Mat detect(Mat inputImage) {
-        // blur image
-        Imgproc.medianBlur(inputImage, inputImage, 1);
-
         // convert input image to HSV
-        Mat image = Util.toHsv(inputImage);
+        Mat image = Util.bgrToHsv(inputImage);
 
         if (hueRanges == null) {
             initializeHueRanges();
         }
 
-        spotCounterHistory.add((HashMap<String, Integer>) spotCounter.clone());
+        spotCounterHistory.add(new HashMap<>(spotCounter));
 
         // loop over every color range to detect
         for (Map.Entry<String, Scalar[]> entry : hueRanges.entrySet()) {
             String rangeName = entry.getKey();
             Mat maskedImage = thresholdColor(image, entry.getValue());
+
+            Util.showImage("masked image", maskedImage);
 
             Mat circles = new Mat();
             Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, 5.0, 6, 12);
@@ -76,7 +75,7 @@ public class Detector {
         log(logMessage);
 
         if (spotCounterHistory.size() >= 1) {
-            HashMap<String, Integer> lastHistoryEntry = spotCounterHistory.get(spotCounterHistory.size() - 1);
+            HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
             if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
                 log("**** GO, GO, GO ****");
             }
@@ -85,6 +84,13 @@ public class Detector {
         return inputImage;
     }
 
+    /**
+     * Color spots matching the provided hueRange will be masked in the image object.
+     *
+     * @param image    The image to mask the colors in
+     * @param hueRange The color definition for masking
+     * @return The masked image
+     */
     private Mat thresholdColor(Mat image, Scalar[] hueRange) {
         Mat range = new Mat();
         Core.inRange(image, hueRange[0], hueRange[1], range);
@@ -92,9 +98,13 @@ public class Detector {
         return range;
     }
 
+    /**
+     * The hue ranges for the red and green spots to detect are initialised.
+     * The counter and history for collecting the detected spots for both hue ranges are initialised also.
+     */
     private void initializeHueRanges() {
-        Scalar[] redHueRange = new Scalar[]{new Scalar(170, 70, 50), new Scalar(180, 255, 255)};
-        Scalar[] greenHueRange = new Scalar[]{new Scalar(50, 100, 80), new Scalar(70, 255, 255)};
+        Scalar[] redHueRange = new Scalar[]{new Scalar(160, 70, 20), new Scalar(190, 255, 255)};
+        Scalar[] greenHueRange = new Scalar[]{new Scalar(40, 100, 20), new Scalar(80, 255, 255)};
 
         hueRanges = new HashMap<>();
         hueRanges.put("red", redHueRange);
@@ -107,6 +117,12 @@ public class Detector {
         spotCounterHistory = new ArrayList<>();
     }
 
+    /**
+     * Marks circles in the provided image object.
+     *
+     * @param image   The image to mark circles in
+     * @param circles The circles to mark
+     */
     private void markCircles(Mat image, Mat circles) {
         if (!circles.empty()) {
             for (int col = 0; col < circles.cols(); col++) {
@@ -117,10 +133,21 @@ public class Detector {
         }
     }
 
+    /**
+     * Log a message with default log level (LogLevel.INFO).
+     *
+     * @param message The message to log
+     */
     private void log(String message) {
         log(message, LogLevel.INFO);
     }
 
+    /**
+     * Log a message, either via debugger object or just plain commandline output.
+     *
+     * @param message log content
+     * @param level   log level for debugger logging
+     */
     private void log(String message, LogLevel level) {
         if (runDebugger) {
             debugger.log(message, level);

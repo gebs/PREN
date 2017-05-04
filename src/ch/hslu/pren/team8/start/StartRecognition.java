@@ -17,8 +17,8 @@ import java.net.URL;
 
 public class StartRecognition {
 
-    private boolean runCamera = false;
-    private boolean runDebugger = false;
+    private final static boolean RUN_CAMERA = false;
+    private final static boolean RUN_DEBUGGER = false;
 
     private Debugger debugger;
     private Rect croppingRectangle;
@@ -35,15 +35,15 @@ public class StartRecognition {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         jsonHandler = JsonHandler.getInstance();
         jsonHandler.setJsonFile("pittProperties.json");
-        detector = Detector.getInstance(runDebugger);
+        detector = Detector.getInstance(RUN_DEBUGGER);
 
-        if (runDebugger) {
-            debugger = Debugger.getInstance(runDebugger);
+        if (RUN_DEBUGGER) {
+            debugger = Debugger.getInstance(RUN_DEBUGGER);
         }
 
         generateCroppingRectangle();
 
-        if (runCamera) {
+        if (RUN_CAMERA) {
             runVideo();
         } else {
             runStatic();
@@ -70,7 +70,7 @@ public class StartRecognition {
 
         String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
 
-        if (runDebugger) {
+        if (RUN_DEBUGGER) {
             debugger.log(logMessage, LogLevel.INFO);
         } else {
             System.out.println(logMessage);
@@ -80,7 +80,6 @@ public class StartRecognition {
     }
 
     private void runVideo() {
-        runCamera = true;
         VideoCapture camera = new VideoCapture(0);
 
         // wait for camera
@@ -93,17 +92,17 @@ public class StartRecognition {
         Mat frame = new Mat();
         Mat croppedFrame;
         Mat rgbImage = new Mat();
-        while (runCamera) {
+        while (true) {
             camera.read(frame);
             Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
-            if (runDebugger) {
+            if (RUN_DEBUGGER) {
                 debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
             }
 
             croppedFrame = frame.submat(croppingRectangle);
             croppedFrame = detector.detect(croppedFrame);
 
-            if (runDebugger) {
+            if (RUN_DEBUGGER) {
                 debugger.log(croppedFrame, ImageType.EDITED, LogLevel.DEBUG);
             }
         }
@@ -113,9 +112,9 @@ public class StartRecognition {
         String basePathStart = "/Images/startTest/test_";
         String basePathEnd = ".png";
 
-        URL[] urls = new URL[45];
+        URL[] urls = new URL[38];
 
-        for (int i = 1; i <= 45; i++) {
+        for (int i = 1; i <= 38; i++) {
             urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
         }
 
@@ -125,11 +124,12 @@ public class StartRecognition {
             File file = new File(url.getFile());
             Mat inputImage = Highgui.imread(file.getAbsolutePath());
 
-            System.out.println(counter);
+            System.out.println("Image #" + counter++);
             workingCopy = inputImage.submat(croppingRectangle);
             workingCopy = detector.detect(workingCopy);
+            System.out.println("");
 
-            Util.showImage("Working copy #" + counter++, workingCopy);
+            //Util.showImage("Working copy #" + counter++, workingCopy);
         }
     }
 }
