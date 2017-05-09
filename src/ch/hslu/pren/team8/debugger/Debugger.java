@@ -65,6 +65,10 @@ public class Debugger {
             LogMessageText msg = new LogMessageText(logLevel, MessageType.LogMessage, message);
             new DebuggerSender(msg, server, PORT);
         }
+        else{
+            System.out.println(message);
+        }
+
     }
 
     public void log(BufferedImage img, ImageType type, LogLevel logLevel) {

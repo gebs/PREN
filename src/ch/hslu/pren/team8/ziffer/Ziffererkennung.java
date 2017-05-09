@@ -1,26 +1,25 @@
 package ch.hslu.pren.team8.ziffer;
 
-import ch.hslu.pren.team8.common.*;
-
 import ch.hslu.pren.team8.debugger.Debugger;
-import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import org.opencv.core.*;
-import org.opencv.core.Point;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
 
-import static org.opencv.core.Core.*;
+import static org.opencv.core.Core.bitwise_or;
+import static org.opencv.core.Core.inRange;
 import static org.opencv.highgui.Highgui.imread;
-import static org.opencv.highgui.Highgui.imwrite;
-import static org.opencv.imgproc.Imgproc.*;
 
 /**
  * Klasse in welcher die ganze Ziffererkennung abläuft
@@ -118,7 +117,8 @@ public class Ziffererkennung {
         findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
         if (rectanglepoints.size() > 1) {
-            new AnalysisWorker(img, rectanglepoints, debugger);
+            debugger.log("Enought Rectangles found starting analysis Worker",LogLevel.ERROR);
+            new AnalysisWorker(img, rectanglepoints);
         }
     }
 
@@ -155,7 +155,6 @@ public class Ziffererkennung {
     }
 
     private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<RectanglePoints> rectanglepoints) {
-        //debugger.log("Finding BoundingBoxes", LogLevel.DEBUG);
         Mat boundingBox = img.clone();
         java.util.List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();

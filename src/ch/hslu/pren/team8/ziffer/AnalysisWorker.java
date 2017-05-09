@@ -35,16 +35,14 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
  * Created by gebs on 5/7/17.
  */
 public class AnalysisWorker implements Runnable {
-
+    private Debugger debugger = Debugger.getInstance(false);
     private Thread thread;
     private Mat srcImg;
     private List<RectanglePoints> rectanglepoints;
-    private Debugger debugger;
 
-    AnalysisWorker(Mat srcImg, List<RectanglePoints> points, Debugger debugger) {
+    AnalysisWorker(Mat srcImg, List<RectanglePoints> points) {
         this.srcImg = srcImg;
         this.rectanglepoints = points;
-        this.debugger = debugger;
 
         if (this.thread == null) {
             this.thread = new Thread(this);
@@ -58,7 +56,7 @@ public class AnalysisWorker implements Runnable {
 
         Mat persCorrect = PerspectiveCorrection(srcImg, points);
 
-        debugger.log(persCorrect, ImageType.EDITED, LogLevel.DEBUG);
+        debugger.log(persCorrect,ImageType.EDITED,LogLevel.ERROR);
 
         Mat rdtest = new Mat();
         Imgproc.cvtColor(persCorrect, rdtest, COLOR_BGR2HSV);
@@ -66,20 +64,19 @@ public class AnalysisWorker implements Runnable {
 
         persCorrect.setTo(new Scalar(255, 255, 255), redmask2);
 
-        Mat bgrimg = new Mat();
-        Imgproc.cvtColor(persCorrect, bgrimg, Imgproc.COLOR_HSV2BGR);
-        Mat gray = new Mat();
-        Imgproc.cvtColor(bgrimg, gray, Imgproc.COLOR_BGR2GRAY);
+        Mat binaryImage = convertToBW(persCorrect);
 
-        Mat binaryImage = new Mat();
-        threshold(gray, binaryImage, 128, 255, THRESH_BINARY_INV | THRESH_OTSU);
+        debugger.log(binaryImage,ImageType.EDITED,LogLevel.ERROR);
 
         Mat skel = generateSkel(binaryImage);
+
+        debugger.log(skel,ImageType.EDITED,LogLevel.ERROR);
+
         List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 45);
-        //   Util.saveImage(skel,"skel");
+
         int foundNumber = getRomanNumeralNumber(lines);
 
-        System.out.println("Found Number: " + foundNumber);
+        debugger.log("Found Number: " + foundNumber, LogLevel.ERROR);
 
         if (foundNumber != 0) {
             AnalysisResultStorage.put(foundNumber);
@@ -218,6 +215,19 @@ public class AnalysisWorker implements Runnable {
 
         //wraped.copyTo(scaled);
         return scaled;
+    }
+
+    private Mat convertToBW(Mat srcImg){
+        Mat bgrimg = new Mat();
+        Imgproc.cvtColor(srcImg, bgrimg, Imgproc.COLOR_HSV2BGR);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(bgrimg, gray, Imgproc.COLOR_BGR2GRAY);
+
+        Mat binaryImage = new Mat();
+        threshold(gray, binaryImage, 128, 255, THRESH_BINARY_INV | THRESH_OTSU);
+
+
+        return binaryImage;
     }
 
     private Mat generateSkel(Mat img) {
