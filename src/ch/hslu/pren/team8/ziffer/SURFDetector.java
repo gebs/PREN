@@ -13,6 +13,23 @@ import java.util.List;
  */
 @Deprecated
 public class SURFDetector {
+
+    static MatOfKeyPoint getDescriptorOfImage(Mat img){
+
+        MatOfKeyPoint objectKeyPoints = new MatOfKeyPoint();
+        FeatureDetector featureDetector = FeatureDetector.create(FeatureDetector.SURF);
+
+        featureDetector.detect(img, objectKeyPoints);
+        KeyPoint[] keypoints = objectKeyPoints.toArray();
+       // System.out.println(keypoints);
+        MatOfKeyPoint objectDescriptors = new MatOfKeyPoint();
+        DescriptorExtractor descriptorExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
+
+        descriptorExtractor.compute(img, objectKeyPoints, objectDescriptors);
+
+        return objectDescriptors;
+    }
+
     public SURFDetector() {
         String bookObject = "/home/gebs/Projects/PREN 2/PREN/resources/Images/II-s.jpg";
         String bookScene = "/home/gebs/Projects/PREN 2/PREN/resources/Images/II.jpg";

@@ -1,9 +1,8 @@
 package ch.hslu.pren.team8.ziffer;
 
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
+import ch.hslu.pren.team8.common.BOWImgDescriptorExtractor;
+import ch.hslu.pren.team8.common.BOWKMeansTrainer;
+import org.opencv.core.*;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
@@ -15,6 +14,7 @@ import java.util.ArrayList;
 
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.resize;
+import static org.opencv.ml.CvSVM.C_SVC;
 
 /**
  * Created by Adrian on 03.11.2016.
@@ -43,7 +43,7 @@ class SVM {
 
     static void Init(int _cntClasses) {
         cntClasses = _cntClasses;
-        for (int i = 0; i< cntClasses;i++){
+        for (int i = 0; i < cntClasses; i++) {
             trainingImages.add(new Mat());
             trainingLabels.add(new Mat());
             trainingData.add(new Mat());
@@ -61,50 +61,70 @@ class SVM {
     }
 
     static void train() {
-        for (int i = 1; i<= cntClasses;i++){
-            trainingImages.get(i-1).copyTo(trainingData.get(i-1));
-            trainingData.get(i-1).convertTo(trainingData.get(i-1), CvType.CV_32FC1);
-            trainingLabels.get(i-1).copyTo(classes.get(i-1));
+        for (int i = 1; i <= cntClasses; i++) {
+            trainingImages.get(i - 1).copyTo(trainingData.get(i - 1));
+            trainingData.get(i - 1).convertTo(trainingData.get(i - 1), CvType.CV_32FC1);
+            trainingLabels.get(i - 1).copyTo(classes.get(i - 1));
             CvSVMParams params = new CvSVMParams();
-            params.set_kernel_type(CvSVM.LINEAR);
-            clasificadors.add(new CvSVM(trainingData.get(i-1), classes.get(i-1), new Mat(), new Mat(), params));
-            clasificadors.get(i-1).save(XML.replace("{0}","" +i));
+            clasificadors.add(new CvSVM(trainingData.get(i - 1), classes.get(i - 1), new Mat(), new Mat(), params));
+            clasificadors.get(i - 1).save(XML.replace("{0}", "" + i));
         }
     }
 
     public static void trainPositive() {
-        for (int i = 1; i<= cntClasses;i++){
-            for (File file : new File(PATH_POSITIVE + i).listFiles()) {
-                Mat img = getMat(file.getAbsolutePath());
-                trainingImages.get(i-1).push_back(img.reshape(1, 1));
-                trainingLabels.get(i-1).push_back(Mat.ones(new Size(1, 1), CvType.CV_32FC1));
-            }
+        //for (int i = 1; i<= cntClasses;i++){
+        int a = 1;
+        TermCriteria tc = new TermCriteria(TermCriteria.MAX_ITER | TermCriteria.EPS, 50, 10);
+        BOWKMeansTrainer bowkMeansTrainer = new BOWKMeansTrainer(1000, tc, 1, 2);
+        for (File file : new File(PATH_POSITIVE + 1).listFiles()) {
+            Mat img = Highgui.imread(file.getAbsolutePath(), Highgui.CV_LOAD_IMAGE_COLOR);
+            MatOfKeyPoint mkp = SURFDetector.getDescriptorOfImage(img);
+
+            bowkMeansTrainer.add(mkp);
         }
+        Mat voci = bowkMeansTrainer.cluster();
+        //BOWImgDescriptorExtractor dextract = new BOWImgDescriptorExtractor();
+        for (File file : new File(PATH_POSITIVE + 1).listFiles()) {
+           // trainingImages.get(i - 1).push_back(mkp);
+            //trainingLabels.get(i - 1).push_back(Mat.ones(new Size(1, 1), CvType.CV_32FC1));
+            //System.out.println("Added Positive " + a + " of number " + i);
+            a++;
+        }
+        //}
     }
 
     public static void trainNegative() {
-        for (int i = 1; i<= cntClasses;i++){
+        for (int i = 1; i <= cntClasses; i++) {
+            int a = 1;
             for (File file : new File(PATH_NEGATIVE + i).listFiles()) {
-                Mat img = getMat(file.getAbsolutePath());
-                trainingImages.get(i-1).push_back(img.reshape(1, 1));
-                trainingLabels.get(i-1).push_back(Mat.zeros(new Size(1, 1), CvType.CV_32FC1));
+                Mat img = Highgui.imread(file.getAbsolutePath(), Highgui.CV_LOAD_IMAGE_COLOR);
+                MatOfKeyPoint mkp = SURFDetector.getDescriptorOfImage(img);
+
+                trainingImages.get(i - 1).push_back(mkp);
+                trainingLabels.get(i - 1).push_back(Mat.zeros(new Size(1, 1), CvType.CV_32FC1));
+
+                System.out.println("Added Negative " + a + " of number " + i);
+                a++;
             }
         }
     }
 
     public static void test(Mat testimage) {
-        Mat in = new Mat();
+       /* Mat in = new Mat();
         cvtColor(testimage, in, Imgproc.COLOR_BGR2GRAY);
         Mat out = new Mat();
         in.convertTo(out, CvType.CV_32FC1);
-        out = out.reshape(1, 1);
+        out = out.reshape(1, 1);*/
 
-        for (int i = 1; i<= cntClasses;i++){
-            clasificadors.get(i-1).load(new File(XML).getAbsolutePath());
-            System.out.println(clasificadors.get(i-1));
+        // Mat img = Highgui.imread(file.getAbsolutePath(), Highgui.CV_LOAD_IMAGE_COLOR);
+        MatOfKeyPoint mkp = SURFDetector.getDescriptorOfImage(testimage);
 
-            System.out.println(out);
-            System.out.println(i + ": "+clasificadors.get(i-1).predict(out));
+        for (int i = 1; i <= cntClasses; i++) {
+            clasificadors.get(i - 1).load(new File(XML).getAbsolutePath());
+            System.out.println(clasificadors.get(i - 1));
+
+            System.out.println(mkp);
+            System.out.println(i + ": " + clasificadors.get(i - 1).predict(mkp));
         }
     }
 }

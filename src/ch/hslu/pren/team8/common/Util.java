@@ -66,7 +66,7 @@ public class Util {
      * @param image Image to save
      * @param path  Path to save the file to (Without filename)
      */
-    static void saveImage(Mat image, String path) {
+    public static void saveImage(Mat image, String path) {
         File file = new File(path + "temp" + Instant.now().getNano() + ".jpg");
 
         try {
