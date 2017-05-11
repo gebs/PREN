@@ -1,7 +1,6 @@
 package ch.hslu.pren.team8.start;
 
 import ch.hslu.pren.team8.common.JsonHandler;
-import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
@@ -128,8 +127,6 @@ public class StartRecognition {
             workingCopy = inputImage.submat(croppingRectangle);
             workingCopy = detector.detect(workingCopy);
             System.out.println("");
-
-            //Util.showImage("Working copy #" + counter++, workingCopy);
         }
     }
 }

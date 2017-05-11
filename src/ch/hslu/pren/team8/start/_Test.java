@@ -10,8 +10,11 @@ import java.net.URL;
 
 /**
  * Created by Peter Gisler on 04.05.2017.
+ *
+ *  DO NOT DOCUMENT THIS CLASS!!!
+ *
  */
-public class Test {
+public class _Test {
 
     private static Detector detector;
 
@@ -19,7 +22,7 @@ public class Test {
         detector = Detector.getInstance(false);
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-        new Test().run();
+        new _Test().run();
     }
 
     public void run() {
