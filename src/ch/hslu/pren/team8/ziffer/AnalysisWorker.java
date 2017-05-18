@@ -24,6 +24,7 @@ import static org.opencv.core.Core.line;
 import static org.opencv.highgui.Highgui.imread;
 import static org.opencv.highgui.Highgui.imwrite;
 import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
+import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY_INV;
 import static org.opencv.imgproc.Imgproc.THRESH_OTSU;
 import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
@@ -39,10 +40,12 @@ public class AnalysisWorker implements Runnable {
     private Thread thread;
     private Mat srcImg;
     private List<RectanglePoints> rectanglepoints;
+    private boolean runCamera = true;
 
-    AnalysisWorker(Mat srcImg, List<RectanglePoints> points) {
+    AnalysisWorker(Mat srcImg, List<RectanglePoints> points, boolean runCamera) {
         this.srcImg = srcImg;
         this.rectanglepoints = points;
+        this.runCamera = runCamera;
 
         if (this.thread == null) {
             this.thread = new Thread(this);
@@ -56,30 +59,39 @@ public class AnalysisWorker implements Runnable {
 
         Mat persCorrect = PerspectiveCorrection(srcImg, points);
 
-        debugger.log(persCorrect,ImageType.EDITED,LogLevel.ERROR);
+
+        if (runCamera) {
+            Imgproc.cvtColor(persCorrect, persCorrect, Imgproc.COLOR_BGR2RGB);
+        }
 
         Mat rdtest = new Mat();
         Imgproc.cvtColor(persCorrect, rdtest, COLOR_BGR2HSV);
+
         Mat redmask2 = getRedMask(rdtest);
 
         persCorrect.setTo(new Scalar(255, 255, 255), redmask2);
 
+        // Util.saveImage(persCorrect,"persCorrect");
+
         Mat binaryImage = convertToBW(persCorrect);
 
-        debugger.log(binaryImage,ImageType.EDITED,LogLevel.ERROR);
+        //  Util.saveImage(binaryImage,"BinaryImage");
+
+        debugger.log(binaryImage, ImageType.EDITED, LogLevel.ERROR);
 
         Mat skel = generateSkel(binaryImage);
 
-        debugger.log(skel,ImageType.EDITED,LogLevel.ERROR);
 
-        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 45);
+        //debugger.log(skel,ImageType.EDITED,LogLevel.ERROR);
+
+        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 40);
 
         int foundNumber = getRomanNumeralNumber(lines);
 
         debugger.log("Found Number: " + foundNumber, LogLevel.ERROR);
 
         if (foundNumber != 0) {
-            AnalysisResultStorage.put(foundNumber);
+            AnalysisResultStorage.getInstance().put(foundNumber);
         }
 
     }
@@ -217,14 +229,21 @@ public class AnalysisWorker implements Runnable {
         return scaled;
     }
 
-    private Mat convertToBW(Mat srcImg){
+    private Mat convertToBW(Mat srcImg) {
         Mat bgrimg = new Mat();
         Imgproc.cvtColor(srcImg, bgrimg, Imgproc.COLOR_HSV2BGR);
         Mat gray = new Mat();
         Imgproc.cvtColor(bgrimg, gray, Imgproc.COLOR_BGR2GRAY);
 
         Mat binaryImage = new Mat();
-        threshold(gray, binaryImage, 128, 255, THRESH_BINARY_INV | THRESH_OTSU);
+        threshold(gray, binaryImage, 65, 255, THRESH_BINARY_INV);
+
+        Imgproc.erode(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
+        Imgproc.dilate(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
+
+        //morphological closing (fill small holes in the foreground)
+        Imgproc.dilate(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
+        Imgproc.erode(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
 
 
         return binaryImage;
@@ -232,29 +251,34 @@ public class AnalysisWorker implements Runnable {
 
     private Mat generateSkel(Mat img) {
         UUID random = UUID.randomUUID();
+        String basePath = "";
+        if (runCamera) {
+            basePath = "/home/pi/";
+        }
+        else {
+            basePath = "resources/";
+        }
 
-
-        imwrite("resources/Images/" + random.toString() + ".png", img);
+        imwrite(basePath + random.toString() + ".png", img);
 
         Mat skel = new Mat();
         try {
-            File f = new File("resources/Images/" + random.toString() + ".png");
+            File f = new File(basePath + random.toString() + ".png");
 
-            Process p = new ProcessBuilder("resources/voronoi", "thin", "zhang_suen_fast", f.getAbsolutePath()).start();
+            Process p = new ProcessBuilder(basePath + "voronoi", "thin", "zhang_suen_fast", f.getAbsolutePath())
+                    .start();
             p.waitFor();
-            skel = imread("resources/Images/" + random.toString() + "_thin.png", 0);
+            skel = imread(basePath + random.toString() + "_thin.png", 0);
 
 
             f.delete();
-            f = new File("resources/Images/" + random.toString() + "_thin.png");
+            f = new File(basePath + random.toString() + "_thin.png");
             f.delete();
         }
-        catch (IOException e) {
+        catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         return skel;
     }
 
@@ -263,8 +287,8 @@ public class AnalysisWorker implements Runnable {
         bitwise_not(result, result);
         Mat lines = new Mat();
         List<RomanNumeralLine> rnlines = new ArrayList<>();
-//        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, 40, 60);
-        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, image.size().height /3, 60);
+        //        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, 40, 60);
+        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, image.size().height / 4, 60);
         for (int i = 0; i < lines.cols(); i++) {
             double data[] = lines.get(0, i);
             Point pt1, pt2;
@@ -298,9 +322,9 @@ public class AnalysisWorker implements Runnable {
         }
         // Util.saveImage(result, "Testa");
 
-        if (getRomanNumeralNumber(rnlines) == 0){
-            Util.saveImage(image,"OImage");
-            Util.saveImage(result,"Lines");
+        if (getRomanNumeralNumber(rnlines) == 0 || true) {
+            //  Util.saveImage(image,"OImage");
+            //    Util.saveImage(result,"Lines");
         }
         return rnlines;
     }

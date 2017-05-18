@@ -1,6 +1,8 @@
 package ch.hslu.pren.team8.ziffer;
 
+import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
+import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -26,9 +28,10 @@ import static org.opencv.highgui.Highgui.imread;
  */
 public class Ziffererkennung {
 
-    private final boolean useCamera = false;
-    private boolean runCamera = false;
-    private Debugger debugger = Debugger.getInstance(runCamera);
+    private boolean runCamera = true;
+    private Debugger debugger;
+    private AnalysisResultStorage storage = AnalysisResultStorage.getInstance();
+
 
     public Ziffererkennung() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -36,6 +39,8 @@ public class Ziffererkennung {
 
     public void Start() {
 
+        runCamera = System.getProperty("user.name").equals("pi");
+        debugger = Debugger.getInstance(runCamera);
         if (runCamera) {
             startWithCamera();
         }
@@ -44,9 +49,11 @@ public class Ziffererkennung {
         }
     }
 
-    public void startWithCamera() {
+    private void startWithCamera() {
+        debugger.log("Program started with Camera",LogLevel.DEBUG);
         //Init Kamera
         VideoCapture camera = new VideoCapture(0);
+
 
         /* Wait till camera is online*/
         try {
@@ -57,47 +64,32 @@ public class Ziffererkennung {
         }
 
         while (runCamera) {
-            if (!AnalysisResultStorage.hasEnoughtResults()) {
+            if (!storage.hasEnoughtResults()) {
                 Mat frame = new Mat();
                 camera.read(frame);
+                if (frame.size().height == 0) {
+                    debugger.log("No Image from Camera", LogLevel.ERROR);
+                }
                 processImage(frame);
-            }else if (!AnalysisResultStorage.isProcessStarted()){
-                AnalysisResultStorage.processResults();
             }
-            else{
+            else if (!storage.isProcessStarted()) {
+                storage.processResults();
+            }
+            else {
                 runCamera = false;
             }
         }
     }
 
 
-    public void startWithFile() {
-        Mat oimg = imread("resources/Images/p4_02.jpg");
-
+    private void startWithFile() {
+        Mat oimg = imread("resources/PI_IMage.png");
         processImage(oimg);
     }
-    private void startWithFiles() {
-
-        File dir = new File("resources/Images/TrainingData4/");
-        File[] directoryListing = dir.listFiles();
-        if (directoryListing != null) {
-            for (File child : directoryListing) {
-                if (!AnalysisResultStorage.hasEnoughtResults()) {
-                    Mat oimg = imread(child.getAbsolutePath());
-                    processImage(oimg);
-                }else if (!AnalysisResultStorage.isProcessStarted()){
-                    AnalysisResultStorage.processResults();
-                }
-                else{
-                    runCamera = false;
-                }
-
-            }
-        }
-    }
-
 
     private void processImage(Mat img) {
+      //  debugger.log("progstarted", LogLevel.DEBUG);
+        debugger.log(img,ImageType.ORIGINAL,LogLevel.DEBUG);
         Mat rgbImage = new Mat();
 
         if (runCamera) {
@@ -111,14 +103,15 @@ public class Ziffererkennung {
 
         Mat redmask = getRedMask(optiimage);
 
+
         ArrayList<Rect> foundRectangles = new ArrayList<>();
         ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
 
         findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
         if (rectanglepoints.size() > 1) {
-            debugger.log("Enought Rectangles found starting analysis Worker",LogLevel.ERROR);
-            new AnalysisWorker(img, rectanglepoints);
+            //debugger.log("Enought Rectangles found starting analysis Worker",LogLevel.ERROR);
+            new AnalysisWorker(img, rectanglepoints, runCamera);
         }
     }
 
@@ -182,8 +175,9 @@ public class Ziffererkennung {
 
             foundRectangles.add(Imgproc.boundingRect(points));
         }
-        debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints found",
-                LogLevel.DEBUG);
+     /*   debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints
+     found",
+                LogLevel.DEBUG);*/
     }
 
     private static void displayImage(String title, Image img2, Image orginal) {

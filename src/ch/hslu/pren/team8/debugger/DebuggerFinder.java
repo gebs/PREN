@@ -106,9 +106,10 @@ public class DebuggerFinder implements Runnable {
                     String[] message = s.split(";");
                     String address = receivePacket.getAddress().toString();
                     address = address.substring(address.lastIndexOf("/") + 1);
-                    System.out.println(message[0].trim());
+                   // System.out.println(message[0].trim());
                     //Only Messages with the correct answer statement will be saved in the ArrayList games.
                     if (message[0].trim().equals(RESPONSE_MESSAGE.trim())) {
+                        System.out.println("Debugger found");
                         //System.out.println("received: " + message[0]);
                         addDebugger(message, address);
                     }

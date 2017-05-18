@@ -10,7 +10,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class MainZiffernanzeige {
 
     public static void main(String[] args) throws InterruptedException {
-        Display display = new Display();
+
+        Display display = Display.getInstance();
         display.turnAllLedsOff();
 
         for (int i = 0; i < 10; i++) {

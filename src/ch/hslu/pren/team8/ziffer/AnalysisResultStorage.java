@@ -11,51 +11,67 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ *
  * Created by gebs on 5/7/17.
  */
 public class AnalysisResultStorage {
-    private static final List<Integer> results = new ArrayList<Integer>();
-    private static int ENOUGHT_RESULTS = 20;
-    private static Debugger debugger = Debugger.getInstance(false);
 
-    public static boolean isProcessStarted() {
+    private static AnalysisResultStorage instance;
+
+    private static final List<Integer> results = new ArrayList<Integer>();
+    private static final int ENOUGHT_RESULTS = 20;
+    private static final int ENOUGHT_TIME = 10;
+    private static Debugger debugger = Debugger.getInstance(false);
+    private static long firstNumberTime = 0;
+
+    public static AnalysisResultStorage getInstance(){
+        if (instance == null){
+            instance = new AnalysisResultStorage();
+        }
+        return instance;
+    }
+
+    boolean isProcessStarted() {
         return processStarted;
     }
 
-    private static boolean processStarted = false;
+    private boolean processStarted = false;
 
-    public static void put(int result) {
+    void put(int result) {
         synchronized (results) {
             if (!hasEnoughtResults()) {
                 results.add(result);
+                if (firstNumberTime == 0) {
+                    firstNumberTime = System.currentTimeMillis();
+                }
             }
         }
     }
 
-    public static boolean hasEnoughtResults() {
-        return results.size() >= ENOUGHT_RESULTS;
+    boolean hasEnoughtResults() {
+
+        return results.size() >= ENOUGHT_RESULTS ||
+                ((((System.currentTimeMillis() - firstNumberTime) / 1000) >= ENOUGHT_TIME) && firstNumberTime != 0);
     }
 
-    public static void processResults() {
+    void processResults() {
         processStarted = true;
         System.out.println("DONE");
 
         debugger.log("Processing Started", LogLevel.ERROR);
-        Map<Integer,Long> counts = results.stream().collect((Collectors.groupingBy(e -> e,Collectors.counting())));
+        Map<Integer, Long> counts = results.stream().collect((Collectors.groupingBy(e -> e, Collectors.counting())));
 
-        int romanNumber = counts.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+        int romanNumber = counts.entrySet().stream()
+                .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
 
 
         debugger.log("Roman Number found: " + romanNumber, LogLevel.ERROR);
-
-        Display display = new Display();
-        display.turnAllLedsOff();
-        display.showDigit(romanNumber);
-
-    }
-
-    private static double getPercentage(int number) {
-        return (double)results.stream().filter(r -> r == number).count() / (double)results.size();
+        try {
+            Display.getInstance().showDigit(romanNumber);
+        }
+        catch (Exception ex) {
+            System.err.print(ex);
+        }
     }
 
 }

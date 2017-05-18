@@ -67,10 +67,10 @@ public class Util {
      * @param path  Path to save the file to (Without filename)
      */
     public static void saveImage(Mat image, String path) {
-        File file = new File(path + "temp" + Instant.now().getNano() + ".jpg");
+        File file = new File(path + "temp" + Instant.now().getNano() + ".png");
 
         try {
-            ImageIO.write(toBufferedImage(image), "jpg", file);  // ignore returned boolean
+            ImageIO.write(toBufferedImage(image), "png", file);  // ignore returned boolean
         } catch (IOException e) {
             System.out.println("Write error for " + file.getPath() +
                     ": " + e.getMessage());

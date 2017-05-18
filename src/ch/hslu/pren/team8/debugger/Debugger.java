@@ -2,6 +2,7 @@ package ch.hslu.pren.team8.debugger;
 
 import ch.hslu.pren.team8.common.*;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.awt.image.BufferedImage;
 
@@ -18,7 +19,7 @@ public class Debugger {
 
         //server = new DebuggerServer("192.168.43.22","ADI");
         if (startDebugger) {
-
+            log("Debugger started",LogLevel.DEBUG);
             java.awt.EventQueue.invokeLater(new Runnable() {
                 DebuggerFinder df;
                 boolean found = false;
@@ -80,7 +81,13 @@ public class Debugger {
 
     public void log(Mat img, ImageType type, LogLevel logLevel) {
         if (img.size().height > 0 && img.size().width > 0) {
-            log(Util.toBufferedImage(img), type, logLevel);
+            Mat bgr = new Mat();
+            if (type == ImageType.ORIGINAL) {
+                Imgproc.cvtColor(img, bgr, Imgproc.COLOR_BGR2RGB);
+            }else{
+                bgr = img;
+            }
+            log(Util.toBufferedImage(bgr), type, logLevel);
         }
     }
 }
