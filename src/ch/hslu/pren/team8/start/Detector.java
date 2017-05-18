@@ -3,6 +3,7 @@ package ch.hslu.pren.team8.start;
 import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.LogLevel;
+import ch.hslu.pren.team8.kommunikation.Communicator;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
@@ -23,6 +24,8 @@ public class Detector {
     private Map<String, Scalar[]> hueRanges;
     private HashMap<String, Integer> spotCounter;
     private List<Map<String, Integer>> spotCounterHistory;
+
+    private static Communicator communicator = Communicator.getInstance();
 
     /**
      * Private constructor for implementing singleton pattern
@@ -78,6 +81,7 @@ public class Detector {
             HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
             if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
                 log("**** GO, GO, GO ****");
+                communicator.publishStartSignal();
             }
         }
 
