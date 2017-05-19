@@ -24,6 +24,8 @@ public class Display {
     private GpioPinDigitalOutput led4;
     private GpioPinDigitalOutput led5;
 
+    private boolean showPattern = false;
+
     private static final int SLEEP_MILLISECONDS = 1000;
 
     /**
@@ -61,6 +63,19 @@ public class Display {
         for (GpioPinDigitalOutput led : activeLeds) {
             led.low();
         }
+    }
+
+    public void showStartPattern() {
+        // TODO: Anzeige des start-patterns implementieren
+        showPattern = true;
+        while (showPattern) {
+            // Hinweis an ADRIAN: evt. werden für diesen Zweck noch weitere (private) Methoden verwendet
+        }
+    }
+
+    private void stopStartPattern() {
+        showPattern = false;
+        // TODO: Start-pattern deaktivieren
     }
 
     /**

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Created by Peter Gisler on 23.03.17
+ * Created by Peter Gisler on 23.03.17.
  */
 public class JsonHandler {
 
@@ -63,26 +63,14 @@ public class JsonHandler {
 
     /**
      * Returns an integer value for the specified property path.
-     * Root json object is starting point of path traversal.
-     *
-     * @param propertyPath Path, parts separated with "."
-     * @return integer value at specified path
-     */
-    public int getInt(String propertyPath) {
-        return getInt(rootObject, getPathList(propertyPath));
-    }
-
-    /**
-     * Returns an integer value for the specified property path.
      * Given json object is starting point of path traversal.
      *
-     * @param object       Object to traverse with specified path
      * @param propertyPath traversal path, parts separated with "."
      * @return integer value at specified path
      */
-    public int getInt(JSONObject object, String propertyPath) {
+    public int getInt(String propertyPath) {
         ArrayList<String> pathArray = getPathList(propertyPath);
-        return getInt(object, pathArray);
+        return getInt(rootObject, pathArray);
     }
 
     /**
@@ -113,23 +101,13 @@ public class JsonHandler {
     }
 
     /**
-     * Returns a json object from the root object at the specified key
-     *
-     * @param key the key of the object to return
-     * @return the requested object within the root object
-     */
-    public JSONObject getObject(String key) {
-        return getObject(rootObject, key);
-    }
-
-    /**
      * Returns a json object from the given object at the specified key
      *
      * @param object the object to retrieve the json object from
      * @param key    the key of the object to return
      * @return the requested object :-)
      */
-    public JSONObject getObject(JSONObject object, String key) {
+    private JSONObject getObject(JSONObject object, String key) {
         if (!object.containsKey(key)) {
             throw new InvalidParameterException("The given object contains no key named '" + key + "'");
         }
