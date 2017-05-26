@@ -3,7 +3,9 @@ package ch.hslu.pren.team8.start;
 import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import ch.hslu.pren.team8.kommunikation.Communicator;
+import ch.hslu.pren.team8.kommunikation.CommunicatorInterface;
+import ch.hslu.pren.team8.kommunikation.CommunicatorNonPi;
+import ch.hslu.pren.team8.kommunikation.CommunicatorPi;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
@@ -25,7 +27,7 @@ public class Detector {
     private HashMap<String, Integer> spotCounter;
     private List<Map<String, Integer>> spotCounterHistory;
 
-    private static Communicator communicator = Communicator.getInstance();
+    private static CommunicatorInterface communicator;
 
     /**
      * Private constructor for implementing singleton pattern
@@ -40,6 +42,13 @@ public class Detector {
             instance.initializeHueRanges();
             instance.debugger = Debugger.getInstance(runDebugger);
             instance.runDebugger = runDebugger;
+
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("mac os")) {
+                communicator = CommunicatorNonPi.getInstance();
+            } else {
+                communicator = CommunicatorPi.getInstance();
+            }
         }
         return instance;
     }
@@ -65,13 +74,15 @@ public class Detector {
             String rangeName = entry.getKey();
             Mat maskedImage = thresholdColor(image, entry.getValue());
 
-            Util.showImage("masked image", maskedImage);
+            //Util.showImage("masked image", maskedImage);
 
             Mat circles = new Mat();
-            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 100.0, 5.0, 6, 12);
+            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 150.0, 15.0, 6, 12);
 
             spotCounter.replace(rangeName, circles.cols());
             markCircles(inputImage, circles);
+
+            //Util.showImage("masked image with " + rangeName + " circles", inputImage);
         }
 
         String logMessage = "RED: " + spotCounter.get("red") + " | GREEN: " + spotCounter.get("green");
@@ -80,7 +91,6 @@ public class Detector {
         if (spotCounterHistory.size() >= 1) {
             HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
             if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
-                log("**** GO, GO, GO ****");
                 communicator.publishStartSignal();
             }
         }

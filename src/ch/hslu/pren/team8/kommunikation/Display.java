@@ -1,8 +1,11 @@
-package ch.hslu.pren.team8.ziffernanzeige;
+package ch.hslu.pren.team8.kommunikation;
 
 import com.pi4j.io.gpio.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Peter Gisler on 30.03.17.
@@ -58,24 +61,66 @@ public class Display {
      * @param digit the digit to display
      */
     public void showDigit(int digit) {
+        flash();
         ArrayList<GpioPinDigitalOutput> activeLeds = getActiveLeds(digit);
-        turnAllLedsOff();
         for (GpioPinDigitalOutput led : activeLeds) {
             led.low();
         }
     }
 
     public void showStartPattern() {
-        // TODO: Anzeige des start-patterns implementieren
+        flash();
         showPattern = true;
+
+        GpioPinDigitalOutput[] leds = new GpioPinDigitalOutput[]{led1, led2, led3, led4, led5};
+
+        List<int[]> states = new ArrayList<>(Arrays.asList(
+                new int[]{1},
+                new int[]{1, 2},
+                new int[]{1, 2, 3},
+                new int[]{2, 3, 4},
+                new int[]{3, 4, 5},
+                new int[]{4, 5},
+                new int[]{5},
+                new int[]{4, 5},
+                new int[]{3, 4, 5},
+                new int[]{2, 3, 4},
+                new int[]{1, 2, 3},
+                new int[]{1, 2},
+                new int[]{1}
+        ));
+
         while (showPattern) {
-            // Hinweis an ADRIAN: evt. werden für diesen Zweck noch weitere (private) Methoden verwendet
+            turnAllLedsOff();
+            for (int[] state : states) {
+                for (int led : state) {
+                    leds[led].low();
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     private void stopStartPattern() {
         showPattern = false;
-        // TODO: Start-pattern deaktivieren
+        flash();
+    }
+
+    public void flash() {
+        for (int count = 0; count < 4; count++) {
+            try {
+                turnAllLedsOn();
+                Thread.sleep(200);
+                turnAllLedsOff();
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -87,6 +132,14 @@ public class Display {
         led3.high();
         led4.high();
         led5.high();
+    }
+
+    public void turnAllLedsOn() {
+        led1.low();
+        led2.low();
+        led3.low();
+        led4.low();
+        led5.low();
     }
 
     /**

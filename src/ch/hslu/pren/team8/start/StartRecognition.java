@@ -33,14 +33,16 @@ public class StartRecognition {
     public void start() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         jsonHandler = JsonHandler.getInstance();
-        jsonHandler.setJsonFile("pittProperties.json");
+        boolean configFileExists = jsonHandler.setJsonFile("pittProperties.json");
         detector = Detector.getInstance(RUN_DEBUGGER);
 
         if (RUN_DEBUGGER) {
             debugger = Debugger.getInstance(RUN_DEBUGGER);
         }
 
-        generateCroppingRectangle();
+        if (configFileExists) {
+            generateCroppingRectangle();
+        }
 
         if (RUN_CAMERA) {
             runVideo();
@@ -89,7 +91,7 @@ public class StartRecognition {
         }
 
         Mat frame = new Mat();
-        Mat croppedFrame;
+        Mat workingFrame;
         Mat rgbImage = new Mat();
         while (true) {
             camera.read(frame);
@@ -98,11 +100,16 @@ public class StartRecognition {
                 debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
             }
 
-            croppedFrame = frame.submat(croppingRectangle);
-            croppedFrame = detector.detect(croppedFrame);
+            if (croppingRectangle != null) {
+                workingFrame = frame.submat(croppingRectangle);
+            } else {
+                workingFrame = frame;
+            }
+
+            workingFrame = detector.detect(workingFrame);
 
             if (RUN_DEBUGGER) {
-                debugger.log(croppedFrame, ImageType.EDITED, LogLevel.DEBUG);
+                debugger.log(workingFrame, ImageType.EDITED, LogLevel.DEBUG);
             }
         }
     }
@@ -117,15 +124,21 @@ public class StartRecognition {
             urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
         }
 
-        Mat workingCopy;
+        Mat workingFrame;
         int counter = 1;
         for (URL url : urls) {
             File file = new File(url.getFile());
             Mat inputImage = Highgui.imread(file.getAbsolutePath());
 
             System.out.println("Image #" + counter++);
-            workingCopy = inputImage.submat(croppingRectangle);
-            workingCopy = detector.detect(workingCopy);
+
+            if (croppingRectangle != null) {
+                workingFrame = inputImage.submat(croppingRectangle);
+            } else {
+                workingFrame = inputImage;
+            }
+
+            workingFrame = detector.detect(workingFrame);
             System.out.println("");
         }
     }
