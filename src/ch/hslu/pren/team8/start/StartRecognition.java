@@ -4,6 +4,7 @@ import ch.hslu.pren.team8.common.JsonHandler;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
+import ch.hslu.pren.team8.ziffer.Ziffererkennung;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -93,7 +94,9 @@ public class StartRecognition {
         Mat frame = new Mat();
         Mat workingFrame;
         Mat rgbImage = new Mat();
-        while (true) {
+        boolean doStart = false;
+
+        while (!doStart) {
             camera.read(frame);
             Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
             if (RUN_DEBUGGER) {
@@ -106,12 +109,15 @@ public class StartRecognition {
                 workingFrame = frame;
             }
 
-            workingFrame = detector.detect(workingFrame);
+            doStart = detector.detect(workingFrame);
 
             if (RUN_DEBUGGER) {
                 debugger.log(workingFrame, ImageType.EDITED, LogLevel.DEBUG);
             }
         }
+
+        camera.release();
+        startDigitRecognition();
     }
 
     private void runStatic() {
@@ -124,9 +130,15 @@ public class StartRecognition {
             urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
         }
 
+        boolean doStart = false;
+
         Mat workingFrame;
         int counter = 1;
         for (URL url : urls) {
+            if (doStart) {
+                continue;
+            }
+
             File file = new File(url.getFile());
             Mat inputImage = Highgui.imread(file.getAbsolutePath());
 
@@ -138,8 +150,18 @@ public class StartRecognition {
                 workingFrame = inputImage;
             }
 
-            workingFrame = detector.detect(workingFrame);
+            doStart = detector.detect(workingFrame);
+
             System.out.println("");
         }
+
+        if (doStart) {
+            startDigitRecognition();
+        }
+    }
+
+    public void startDigitRecognition() {
+
+        new Ziffererkennung().Start();
     }
 }

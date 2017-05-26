@@ -57,9 +57,11 @@ public class Detector {
      * Detect circles of specific colors in the provided input image
      *
      * @param inputImage The input image to be processed
-     * @return the processed image with marked circles
+     * @return true if the start signal was detected
      */
-    public Mat detect(Mat inputImage) {
+    public boolean detect(Mat inputImage) {
+        boolean doStart = false;
+
         // convert input image to HSV
         Mat image = Util.bgrToHsv(inputImage);
 
@@ -91,11 +93,12 @@ public class Detector {
         if (spotCounterHistory.size() >= 1) {
             HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
             if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
+                doStart = true;
                 communicator.publishStartSignal();
             }
         }
 
-        return inputImage;
+        return doStart;
     }
 
     /**
