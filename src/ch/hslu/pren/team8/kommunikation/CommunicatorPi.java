@@ -1,5 +1,6 @@
 package ch.hslu.pren.team8.kommunikation;
 
+import ch.hslu.pren.team8.ziffer.Ziffererkennung;
 import com.pi4j.io.gpio.*;
 
 import java.util.HashMap;
@@ -85,6 +86,7 @@ public class CommunicatorPi implements CommunicatorInterface {
      */
     public void publishStartSignal() {
         publishSignal(SIGNAL_START);
+        new Ziffererkennung().Start();
         display.showStartPattern();
     }
 

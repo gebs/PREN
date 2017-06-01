@@ -2,10 +2,7 @@ package ch.hslu.pren.team8.kommunikation;
 
 import com.pi4j.io.gpio.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Peter Gisler on 30.03.17.
@@ -61,7 +58,7 @@ public class Display {
      * @param digit the digit to display
      */
     public void showDigit(int digit) {
-        flash();
+        flash(3);
         ArrayList<GpioPinDigitalOutput> activeLeds = getActiveLeds(digit);
         for (GpioPinDigitalOutput led : activeLeds) {
             led.low();
@@ -69,7 +66,7 @@ public class Display {
     }
 
     public void showStartPattern() {
-        flash();
+        flash(3);
         showPattern = true;
 
         GpioPinDigitalOutput[] leds = new GpioPinDigitalOutput[]{led1, led2, led3, led4, led5};
@@ -107,16 +104,16 @@ public class Display {
 
     private void stopStartPattern() {
         showPattern = false;
-        flash();
+        flash(3);
     }
 
-    public void flash() {
-        for (int count = 0; count < 4; count++) {
+    public void flash(int flashCount) {
+        for (int count = 0; count < flashCount; count++) {
             try {
                 turnAllLedsOn();
                 Thread.sleep(200);
                 turnAllLedsOff();
-                Thread.sleep(200);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -149,33 +146,23 @@ public class Display {
      * @return The array with all leds to turn on
      */
     private ArrayList<GpioPinDigitalOutput> getActiveLeds(int digit) {
-        ArrayList<GpioPinDigitalOutput> activeLeds = new ArrayList<>();
+        ArrayList<GpioPinDigitalOutput> activeLeds;
 
         switch (digit) {
             case 1:
-                activeLeds.add(led3);
+                activeLeds = new ArrayList<>(Collections.singletonList(led3));
                 break;
             case 2:
-                activeLeds.add(led2);
-                activeLeds.add(led4);
+                activeLeds = new ArrayList<>(Arrays.asList(led2, led4));
                 break;
             case 3:
-                activeLeds.add(led1);
-                activeLeds.add(led3);
-                activeLeds.add(led5);
+                activeLeds = new ArrayList<>(Arrays.asList(led1, led3, led5));
                 break;
             case 4:
-                activeLeds.add(led1);
-                activeLeds.add(led2);
-                activeLeds.add(led4);
-                activeLeds.add(led5);
+                activeLeds = new ArrayList<>(Arrays.asList(led1, led2, led4, led5));
                 break;
             case 5:
-                activeLeds.add(led1);
-                activeLeds.add(led2);
-                activeLeds.add(led3);
-                activeLeds.add(led4);
-                activeLeds.add(led5);
+                activeLeds = new ArrayList<>(Arrays.asList(led1, led2, led3, led4, led5));
                 break;
             default:
                 throw new IllegalArgumentException("Only digits from 1 to 5 are valid digits!");

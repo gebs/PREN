@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Peter Gisler on 23.03.17.
@@ -63,7 +64,6 @@ public class JsonHandler {
 
     /**
      * Returns an integer value for the specified property path.
-     * Given json object is starting point of path traversal.
      *
      * @param propertyPath traversal path, parts separated with "."
      * @return integer value at specified path
@@ -86,6 +86,33 @@ public class JsonHandler {
             return getInt(getObject(object, key), propertyPath);
         } else {
             return (int) (long) object.get(propertyPath.get(0));
+        }
+    }
+
+    /**
+     * Returns a boolean value from the specified property path.
+     *
+     * @param propertyPath traversal path, parts separated with "."
+     * @return integer value at specified path
+     */
+    public boolean getBoolean(String propertyPath) {
+        List<String> pathArray = getPathList(propertyPath);
+        return getBoolean(rootObject, pathArray);
+    }
+
+    /**
+     * Retrieves a boolean value from the specified object.
+     *
+     * @param object       object to retrieve boolean value from
+     * @param propertyPath property path, split into separate parts
+     * @return boolean value of object at specified path
+     */
+    private boolean getBoolean(JSONObject object, List<String> propertyPath) {
+        if (propertyPath.size() > 1) {
+            String key = propertyPath.remove(0);
+            return getBoolean(getObject(object, key), propertyPath);
+        } else {
+            return (boolean) object.get(propertyPath.get(0));
         }
     }
 
@@ -143,9 +170,19 @@ public class JsonHandler {
     }
 
     /**
-     * Gets an absolute file path of a given path relative to the users home directory
-     * <p>
-     * TODO: Hier muss möglicherweise der "UserRootPath" angepasst werden, falls der Start der .jar Datei mit sudo Auswirkungen haben sollte!
+     * Checks whether the instance of JsonHandler has a valid file set.
+     * A valid file is any existing file.
+     *
+     * @return true if a file is available
+     */
+    public boolean hasValidFile() {
+        return jsonFile != null && jsonFile.exists();
+    }
+
+    /**
+     * Gets an absolute file path of a given path relative to the users home directory.
+     * On raspberry pi the pi-user home directory is:   /home/pi
+     * On raspberry pi de root-user home directory is:  /root
      *
      * @param relativePath path, relative to the users home directory
      * @return absolute file path

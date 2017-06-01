@@ -1,5 +1,7 @@
 package ch.hslu.pren.team8.kommunikation;
 
+import ch.hslu.pren.team8.ziffer.Ziffererkennung;
+
 /**
  * Created by Peter Gisler on 26.05.17.
  */

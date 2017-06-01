@@ -3,9 +3,6 @@ package ch.hslu.pren.team8.start;
 import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import ch.hslu.pren.team8.kommunikation.CommunicatorInterface;
-import ch.hslu.pren.team8.kommunikation.CommunicatorNonPi;
-import ch.hslu.pren.team8.kommunikation.CommunicatorPi;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
@@ -27,8 +24,6 @@ public class Detector {
     private HashMap<String, Integer> spotCounter;
     private List<Map<String, Integer>> spotCounterHistory;
 
-    private static CommunicatorInterface communicator;
-
     /**
      * Private constructor for implementing singleton pattern
      */
@@ -40,14 +35,9 @@ public class Detector {
         if (instance == null) {
             instance = new Detector();
             instance.initializeHueRanges();
-            instance.debugger = Debugger.getInstance(runDebugger);
             instance.runDebugger = runDebugger;
-
-            String os = System.getProperty("os.name").toLowerCase();
-            if (os.contains("mac os")) {
-                communicator = CommunicatorNonPi.getInstance();
-            } else {
-                communicator = CommunicatorPi.getInstance();
+            if (runDebugger) {
+                instance.debugger = Debugger.getInstance(true);
             }
         }
         return instance;
@@ -94,7 +84,6 @@ public class Detector {
             HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
             if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
                 doStart = true;
-                communicator.publishStartSignal();
             }
         }
 
