@@ -2,11 +2,10 @@ package ch.hslu.pren.team8.ziffer;
 
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import ch.hslu.pren.team8.kommunikation.Communicator;
-import ch.hslu.pren.team8.ziffernanzeige.Display;
+import ch.hslu.pren.team8.kommunikation.CommunicatorPi;
+import ch.hslu.pren.team8.kommunikation.Display;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,10 +66,9 @@ public class AnalysisResultStorage {
 
         debugger.log("Roman Number found: " + romanNumber, LogLevel.ERROR);
 
-        try {
-            Communicator.getInstance().publishDigitRecognition(romanNumber);
-        }
-        catch (Exception ex) {
+        try{
+            CommunicatorPi.getInstance().publishDigitRecognition(romanNumber);
+        }catch (Exception ex){
             ex.printStackTrace();
         }
 

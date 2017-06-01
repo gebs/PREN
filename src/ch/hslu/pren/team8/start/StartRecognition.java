@@ -4,6 +4,7 @@ import ch.hslu.pren.team8.common.JsonHandler;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
+import ch.hslu.pren.team8.ziffer.Ziffererkennung;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -33,14 +34,16 @@ public class StartRecognition {
     public void start() {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         jsonHandler = JsonHandler.getInstance();
-        jsonHandler.setJsonFile("pittProperties.json");
+        boolean configFileExists = jsonHandler.setJsonFile("pittProperties.json");
         detector = Detector.getInstance(RUN_DEBUGGER);
 
         if (RUN_DEBUGGER) {
             debugger = Debugger.getInstance(RUN_DEBUGGER);
         }
 
-        generateCroppingRectangle();
+        if (configFileExists) {
+            generateCroppingRectangle();
+        }
 
         if (RUN_CAMERA) {
             runVideo();
@@ -89,22 +92,32 @@ public class StartRecognition {
         }
 
         Mat frame = new Mat();
-        Mat croppedFrame;
+        Mat workingFrame;
         Mat rgbImage = new Mat();
-        while (true) {
+        boolean doStart = false;
+
+        while (!doStart) {
             camera.read(frame);
             Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
             if (RUN_DEBUGGER) {
                 debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
             }
 
-            croppedFrame = frame.submat(croppingRectangle);
-            croppedFrame = detector.detect(croppedFrame);
+            if (croppingRectangle != null) {
+                workingFrame = frame.submat(croppingRectangle);
+            } else {
+                workingFrame = frame;
+            }
+
+            doStart = detector.detect(workingFrame);
 
             if (RUN_DEBUGGER) {
-                debugger.log(croppedFrame, ImageType.EDITED, LogLevel.DEBUG);
+                debugger.log(workingFrame, ImageType.EDITED, LogLevel.DEBUG);
             }
         }
+
+        camera.release();
+        startDigitRecognition();
     }
 
     private void runStatic() {
@@ -117,16 +130,38 @@ public class StartRecognition {
             urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
         }
 
-        Mat workingCopy;
+        boolean doStart = false;
+
+        Mat workingFrame;
         int counter = 1;
         for (URL url : urls) {
+            if (doStart) {
+                continue;
+            }
+
             File file = new File(url.getFile());
             Mat inputImage = Highgui.imread(file.getAbsolutePath());
 
             System.out.println("Image #" + counter++);
-            workingCopy = inputImage.submat(croppingRectangle);
-            workingCopy = detector.detect(workingCopy);
+
+            if (croppingRectangle != null) {
+                workingFrame = inputImage.submat(croppingRectangle);
+            } else {
+                workingFrame = inputImage;
+            }
+
+            doStart = detector.detect(workingFrame);
+
             System.out.println("");
         }
+
+        if (doStart) {
+            startDigitRecognition();
+        }
+    }
+
+    public void startDigitRecognition() {
+
+        new Ziffererkennung().Start();
     }
 }

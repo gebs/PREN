@@ -1,6 +1,6 @@
 package ch.hslu.pren.team8;
 
-import ch.hslu.pren.team8.ziffernanzeige.Display;
+import ch.hslu.pren.team8.kommunikation.Display;
 
 import java.util.concurrent.ThreadLocalRandom;
 

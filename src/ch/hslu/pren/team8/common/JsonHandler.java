@@ -128,14 +128,24 @@ public class JsonHandler {
      * Sets the json handlers json file by file path
      *
      * @param relativePath path of file, relative to the users home directory
+     * @return whether the json config file exists
      */
-    public void setJsonFile(String relativePath) {
-        jsonFile = new File(getPathRelativeToUserHome(relativePath));
-        rootObject = getRootObject();
+    public boolean setJsonFile(String relativePath) {
+        File file = new File(getPathRelativeToUserHome(relativePath));
+        boolean fileExists = file.exists();
+
+        if (fileExists) {
+            jsonFile = file;
+            rootObject = getRootObject();
+        }
+
+        return fileExists;
     }
 
     /**
      * Gets an absolute file path of a given path relative to the users home directory
+     * <p>
+     * TODO: Hier muss möglicherweise der "UserRootPath" angepasst werden, falls der Start der .jar Datei mit sudo Auswirkungen haben sollte!
      *
      * @param relativePath path, relative to the users home directory
      * @return absolute file path

@@ -13,11 +13,12 @@ import java.util.Map;
  * <p>
  * Important Notice: The internal bit numbering is from left (1) to right (3) which means from most significant (1) to least significant (3) bit.
  * <p>
- * Since the Communicator class implements the singleton pattern, you should use the static method getInstance to retrieve the single instance of the communicator. After obtaining the instance, the two public methods for publishing state information can be used.
+ * Since the CommunicatorPi class implements the singleton pattern, you should use the static method getInstance to retrieve the single instance of the communicator. After obtaining the instance, the two public methods for publishing state information can be used.
  */
-public class Communicator {
+public class CommunicatorPi implements CommunicatorInterface {
 
-    private static Communicator instance;
+    private static CommunicatorPi instance;
+    private Display display;
 
     private static final Pin BIT1_PIN = RaspiPin.GPIO_22;
     private static final Pin BIT2_PIN = RaspiPin.GPIO_23;
@@ -44,13 +45,15 @@ public class Communicator {
 
     /**
      * Private constructor since no direct object initialisation is allowed from the outside.
-     * An instance of GpioFactory is stored in a member variable and the gpio outputs ar initialised with a LOW signal.
+     * The gpio outputs ar initialised with a LOW signal.
      */
-    private Communicator() {
+    private CommunicatorPi() {
         GpioController gpio = GpioFactory.getInstance();
         BIT_1 = gpio.provisionDigitalOutputPin(BIT1_PIN, "BIT 1", PinState.LOW);
         BIT_2 = gpio.provisionDigitalOutputPin(BIT2_PIN, "BIT 2", PinState.LOW);
         BIT_3 = gpio.provisionDigitalOutputPin(BIT3_PIN, "BIT 3", PinState.LOW);
+
+        display = Display.getInstance();
     }
 
     /**
@@ -59,9 +62,9 @@ public class Communicator {
      *
      * @return The only existing communicator instance
      */
-    public static Communicator getInstance() {
+    public static CommunicatorPi getInstance() {
         if (instance == null) {
-            instance = new Communicator();
+            instance = new CommunicatorPi();
         }
         instance.resetSignal();
         return instance;
@@ -82,6 +85,7 @@ public class Communicator {
      */
     public void publishStartSignal() {
         publishSignal(SIGNAL_START);
+        display.showStartPattern();
     }
 
     /**
@@ -113,6 +117,7 @@ public class Communicator {
         }
 
         publishSignal(signal);
+        display.showDigit(detectedDigit);
     }
 
     /**
