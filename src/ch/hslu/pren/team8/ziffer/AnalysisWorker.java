@@ -33,6 +33,7 @@ import static org.opencv.imgproc.Imgproc.threshold;
 import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 /**
+ * Klasse zur Erkennung der gefundenen Zahl
  * Created by gebs on 5/7/17.
  */
 public class AnalysisWorker implements Runnable {
@@ -71,18 +72,11 @@ public class AnalysisWorker implements Runnable {
 
         persCorrect.setTo(new Scalar(255, 255, 255), redmask2);
 
-        // Util.saveImage(persCorrect,"persCorrect");
-
         Mat binaryImage = convertToBW(persCorrect);
-
-        //  Util.saveImage(binaryImage,"BinaryImage");
 
         debugger.log(binaryImage, ImageType.EDITED, LogLevel.ERROR);
 
         Mat skel = generateSkel(binaryImage);
-
-
-        //debugger.log(skel,ImageType.EDITED,LogLevel.ERROR);
 
         List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 40);
 
@@ -96,6 +90,12 @@ public class AnalysisWorker implements Runnable {
 
     }
 
+
+    /**
+     * Erzeugt eine Maske mit den Rot-Bereichen des Bildes
+     * @param hsv_img Ein Bild im HSV Farbschema
+     * @return Maske als BinaryImage
+     */
     private Mat getRedMask(Mat hsv_img) {
         //  debugger.log("Finding Redmask", LogLevel.DEBUG);
         Mat redmask1 = new Mat();
@@ -287,7 +287,6 @@ public class AnalysisWorker implements Runnable {
         bitwise_not(result, result);
         Mat lines = new Mat();
         List<RomanNumeralLine> rnlines = new ArrayList<>();
-        //        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, 40, 60);
         Imgproc.HoughLinesP(image, lines, rho, theta, threshold, image.size().height / 4, 60);
         for (int i = 0; i < lines.cols(); i++) {
             double data[] = lines.get(0, i);
@@ -302,30 +301,8 @@ public class AnalysisWorker implements Runnable {
             if ((angle >= 10 || angle <= -10) && rnlines.stream().filter(rn -> rn.isNear(pt1, pt2)).count() == 0) {
                 rnlines.add(new RomanNumeralLine(angle, pt1, pt2));
             }
-
-
-          /*  double data[] = lines.get(0, i);
-            double rho1 = data[0];
-            double theta1 = data[1];
-            double cosTheta = Math.cos(theta1);
-            double sinTheta = Math.sin(theta1);
-            double x0 = cosTheta * rho1;
-            double y0 = sinTheta * rho1;
-            Point pt1 = new Point(x0 * (-sinTheta), y0 * cosTheta);
-            Point pt2 = new Point(x0 * (-sinTheta), y0 * cosTheta);
-            line(result, pt1, pt2, new Scalar(0, 0, 255), 2);
-            double angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180.0 / Math.PI;
-            if (angle < 0) {
-                angle = angle + 360;
-            }
-            rnlines.add(new RomanNumeralLine(angle));*/
         }
-        // Util.saveImage(result, "Testa");
 
-        if (getRomanNumeralNumber(rnlines) == 0 || true) {
-            //  Util.saveImage(image,"OImage");
-            //    Util.saveImage(result,"Lines");
-        }
         return rnlines;
     }
 

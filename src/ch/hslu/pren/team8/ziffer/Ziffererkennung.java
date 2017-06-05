@@ -1,6 +1,5 @@
 package ch.hslu.pren.team8.ziffer;
 
-import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
@@ -16,7 +15,6 @@ import org.opencv.imgproc.Imgproc;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 
 import static org.opencv.core.Core.bitwise_or;

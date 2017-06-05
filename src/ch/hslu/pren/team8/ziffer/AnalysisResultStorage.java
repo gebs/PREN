@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- *
+ * KLasse zur Speicherung und Auswertung der erkannten Ziffern
  * Created by gebs on 5/7/17.
  */
 public class AnalysisResultStorage {
@@ -24,8 +24,8 @@ public class AnalysisResultStorage {
     private static Debugger debugger = Debugger.getInstance(false);
     private static long firstNumberTime = 0;
 
-    public static AnalysisResultStorage getInstance(){
-        if (instance == null){
+    public static AnalysisResultStorage getInstance() {
+        if (instance == null) {
             instance = new AnalysisResultStorage();
         }
         return instance;
@@ -49,9 +49,8 @@ public class AnalysisResultStorage {
     }
 
     boolean hasEnoughtResults() {
-
-        return results.size() >= ENOUGHT_RESULTS ||
-                ((((System.currentTimeMillis() - firstNumberTime) / 1000) >= ENOUGHT_TIME) && firstNumberTime != 0);
+        return results.size() >= ENOUGHT_RESULTS || ((((System
+                .currentTimeMillis() - firstNumberTime) / 1000) >= ENOUGHT_TIME) && firstNumberTime != 0);
     }
 
     void processResults() {
