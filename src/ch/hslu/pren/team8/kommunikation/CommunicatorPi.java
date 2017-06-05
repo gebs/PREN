@@ -4,6 +4,7 @@ import ch.hslu.pren.team8.ziffer.Ziffererkennung;
 import com.pi4j.io.gpio.*;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -29,14 +30,14 @@ public class CommunicatorPi implements CommunicatorInterface {
     private static GpioPinDigitalOutput BIT_2;
     private static GpioPinDigitalOutput BIT_3;
 
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_START = createStartMap(PinState.HIGH, PinState.HIGH, PinState.HIGH);
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_1 = createStartMap(PinState.LOW, PinState.LOW, PinState.HIGH);
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_2 = createStartMap(PinState.LOW, PinState.HIGH, PinState.LOW);
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_3 = createStartMap(PinState.LOW, PinState.HIGH, PinState.HIGH);
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_4 = createStartMap(PinState.HIGH, PinState.LOW, PinState.LOW);
-    private static final Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_5 = createStartMap(PinState.HIGH, PinState.LOW, PinState.HIGH);
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_START;
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_1;
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_2;
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_3;
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_4;
+    public static Map<GpioPinDigitalOutput, PinState> SIGNAL_DIGIT_5;
 
-    private static Map<GpioPinDigitalOutput, PinState> createStartMap(PinState bit1state, PinState bit2state, PinState bit3state) {
+    private static Map<GpioPinDigitalOutput, PinState> createMap(PinState bit1state, PinState bit2state, PinState bit3state) {
         Map<GpioPinDigitalOutput, PinState> map = new HashMap<>();
         map.put(BIT_1, bit1state);
         map.put(BIT_2, bit2state);
@@ -53,6 +54,13 @@ public class CommunicatorPi implements CommunicatorInterface {
         BIT_1 = gpio.provisionDigitalOutputPin(BIT1_PIN, "BIT 1", PinState.LOW);
         BIT_2 = gpio.provisionDigitalOutputPin(BIT2_PIN, "BIT 2", PinState.LOW);
         BIT_3 = gpio.provisionDigitalOutputPin(BIT3_PIN, "BIT 3", PinState.LOW);
+
+        SIGNAL_START = createMap(PinState.HIGH, PinState.HIGH, PinState.HIGH);
+        SIGNAL_DIGIT_1 = createMap(PinState.LOW, PinState.LOW, PinState.HIGH);
+        SIGNAL_DIGIT_2 = createMap(PinState.LOW, PinState.HIGH, PinState.LOW);
+        SIGNAL_DIGIT_3 = createMap(PinState.LOW, PinState.HIGH, PinState.HIGH);
+        SIGNAL_DIGIT_4 = createMap(PinState.HIGH, PinState.LOW, PinState.LOW);
+        SIGNAL_DIGIT_5 = createMap(PinState.HIGH, PinState.LOW, PinState.HIGH);
 
         display = Display.getInstance();
     }
@@ -128,10 +136,13 @@ public class CommunicatorPi implements CommunicatorInterface {
      *
      * @param signal The signal value to publish
      */
-    private void publishSignal(Map<GpioPinDigitalOutput, PinState> signal) {
-        for (Map.Entry bitState : signal.entrySet()) {
-            GpioPinDigitalOutput bit = (GpioPinDigitalOutput) bitState.getKey();
-            PinState state = (PinState) bitState.getValue();
+    public void publishSignal(Map<GpioPinDigitalOutput, PinState> signal) {
+
+        for (Object o : signal.entrySet()) {
+            Map.Entry pair = (Map.Entry) o;
+
+            GpioPinDigitalOutput bit = (GpioPinDigitalOutput) pair.getKey();
+            PinState state = (PinState) pair.getValue();
             bit.setState(state);
         }
     }

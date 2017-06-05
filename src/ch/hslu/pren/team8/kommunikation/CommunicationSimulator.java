@@ -5,33 +5,60 @@ package ch.hslu.pren.team8.kommunikation;
  */
 public class CommunicationSimulator {
 
-    private final static int SIGNAL_DURATION_MILLISECONDS = 2000;
+    private final static int SIGNAL_DURATION_MILLISECONDS = 5000;
 
-    private CommunicatorInterface communicator;
+    private static CommunicatorInterface communicator;
+
+    private static Display display;
 
     public static void main(String[] args) {
-        new CommunicationSimulator().simulate();
-    }
+        CommunicationSimulator simulator = new CommunicationSimulator();
 
-
-    public void simulate() {
         if (System.getProperty("os.name").toLowerCase().contains("mac os")) {
             communicator = CommunicatorNonPi.getInstance();
+            System.out.println("run on mac");
         } else {
             communicator = CommunicatorPi.getInstance();
+            display = Display.getInstance();
+            System.out.println("run on pi");
         }
 
-        communicator.publishStartSignal();
+        if (args.length > 0) {
+            String digitString = args[0];
+            int digit = Integer.valueOf(digitString);
+            simulator.simulateStatic(digit);
+        } else {
+            simulator.simulate();
+        }
+    }
 
+    public void simulate() {
+        System.out.println("START");
+        communicator.publishSignal(CommunicatorPi.SIGNAL_START);
         sleep(SIGNAL_DURATION_MILLISECONDS);
 
         for (int digit = 1; digit <= 5; digit++) {
             try {
-                communicator.publishDigitRecognition(digit);
+                simulateStatic(digit);
                 sleep(SIGNAL_DURATION_MILLISECONDS);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void simulateStatic(int digit) {
+        System.out.println("DIGIT: " + digit);
+
+        if (display != null) {
+            System.out.println("HAS DISPLAY!");
+            display.showDigit(digit);
+        }
+
+        try {
+            communicator.publishDigitRecognition(digit);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
