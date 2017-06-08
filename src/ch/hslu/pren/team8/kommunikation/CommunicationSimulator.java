@@ -14,6 +14,18 @@ public class CommunicationSimulator {
     public static void main(String[] args) {
         CommunicationSimulator simulator = new CommunicationSimulator();
 
+        if (args.length != 3) {
+            System.out.println("INVALID ARGUMENT LENGTH!");
+            System.out.println("Arguments: startDelay | digitDelay | digit");
+            System.exit(-1);
+        }
+
+        int startDelaySeconds = Integer.valueOf(args[0]);
+        int digitDelaySeconds = Integer.valueOf(args[1]);
+        int digit = Integer.valueOf(args[2]);
+
+        System.out.println("Start in " + startDelaySeconds + "s | digit in " + digitDelaySeconds + "s | digit: " + digit);
+
         if (System.getProperty("os.name").toLowerCase().contains("mac os")) {
             communicator = CommunicatorNonPi.getInstance();
             System.out.println("run on mac");
@@ -23,35 +35,31 @@ public class CommunicationSimulator {
             System.out.println("run on pi");
         }
 
-        if (args.length > 0) {
-            String digitString = args[0];
-            int digit = Integer.valueOf(digitString);
-            simulator.simulateStatic(digit);
-        } else {
-            simulator.simulate();
-        }
+        simulator.simulate(startDelaySeconds, digitDelaySeconds, digit);
     }
 
-    public void simulate() {
+    public void simulate(int startDelaySeconds, int digitDelaySeconds, int digit) {
+        sleep(startDelaySeconds * 1000);
         System.out.println("START");
         communicator.publishSignal(CommunicatorPi.SIGNAL_START);
-        sleep(SIGNAL_DURATION_MILLISECONDS);
 
-        for (int digit = 1; digit <= 5; digit++) {
-            try {
-                simulateStatic(digit);
-                sleep(SIGNAL_DURATION_MILLISECONDS);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (display != null) {
+            display.showStartPattern();
         }
+
+        sleep(digitDelaySeconds * 1000);
+
+        if (display != null) {
+            display.stopStartPattern();
+        }
+
+        simulateStatic(digit);
     }
 
     public void simulateStatic(int digit) {
         System.out.println("DIGIT: " + digit);
 
         if (display != null) {
-            System.out.println("HAS DISPLAY!");
             display.showDigit(digit);
         }
 

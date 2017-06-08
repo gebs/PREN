@@ -26,7 +26,7 @@ public class _Test {
     }
 
     public void run() {
-        String basePathStart = "/Images/startTest/test_";
+        String basePathStart = "/Images/startTest1/test_";
         String basePathEnd = ".png";
 
         int[] imageIndices = new int[]{1, 17};

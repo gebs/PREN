@@ -55,7 +55,7 @@ public class CommunicatorPi implements CommunicatorInterface {
         BIT_2 = gpio.provisionDigitalOutputPin(BIT2_PIN, "BIT 2", PinState.LOW);
         BIT_3 = gpio.provisionDigitalOutputPin(BIT3_PIN, "BIT 3", PinState.LOW);
 
-        SIGNAL_START = createMap(PinState.HIGH, PinState.HIGH, PinState.HIGH);
+        SIGNAL_START = createMap(PinState.HIGH, PinState.HIGH, PinState.LOW);
         SIGNAL_DIGIT_1 = createMap(PinState.LOW, PinState.LOW, PinState.HIGH);
         SIGNAL_DIGIT_2 = createMap(PinState.LOW, PinState.HIGH, PinState.LOW);
         SIGNAL_DIGIT_3 = createMap(PinState.LOW, PinState.HIGH, PinState.HIGH);
@@ -94,8 +94,8 @@ public class CommunicatorPi implements CommunicatorInterface {
      */
     public void publishStartSignal() {
         publishSignal(SIGNAL_START);
-        new Ziffererkennung().Start();
         display.showStartPattern();
+        new Ziffererkennung().Start();
     }
 
     /**

@@ -16,9 +16,15 @@ import java.util.Map;
  */
 public class Detector {
 
+    public final static int MISSING_RED_LIGHT_LIMIT = 5;
+    public final static int MAIN_CIRCLE_LOWER_LIMIT = 30;
+    private static int framesWithoutMainCircle = 0;
+    private static Map<String, Integer> circles = new HashMap<>();
+
     private static Detector instance;
     private Debugger debugger;
     private boolean runDebugger;
+
 
     private Map<String, Scalar[]> hueRanges;
     private HashMap<String, Integer> spotCounter;
@@ -43,13 +49,17 @@ public class Detector {
         return instance;
     }
 
+    public boolean detect(Mat inputImage) {
+        return detect(inputImage, 0);
+    }
+
     /**
      * Detect circles of specific colors in the provided input image
      *
      * @param inputImage The input image to be processed
      * @return true if the start signal was detected
      */
-    public boolean detect(Mat inputImage) {
+    public boolean detect(Mat inputImage, int imgIndex) {
         boolean doStart = false;
 
         // convert input image to HSV
@@ -63,28 +73,18 @@ public class Detector {
 
         // loop over every color range to detect
         for (Map.Entry<String, Scalar[]> entry : hueRanges.entrySet()) {
-            String rangeName = entry.getKey();
             Mat maskedImage = thresholdColor(image, entry.getValue());
 
-            //Util.showImage("masked image", maskedImage);
-
             Mat circles = new Mat();
-            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 150.0, 15.0, 6, 12);
+            Imgproc.HoughCircles(maskedImage, circles, Imgproc.CV_HOUGH_GRADIENT, 1.0, image.rows() / 8.0, 150.0, 8.0, 3, 8);
 
-            spotCounter.replace(rangeName, circles.cols());
-            markCircles(inputImage, circles);
-
-            //Util.showImage("masked image with " + rangeName + " circles", inputImage);
+            checkCircles(circles);
         }
 
-        String logMessage = "RED: " + spotCounter.get("red") + " | GREEN: " + spotCounter.get("green");
-        log(logMessage);
-
-        if (spotCounterHistory.size() >= 1) {
-            HashMap<String, Integer> lastHistoryEntry = (HashMap<String, Integer>) spotCounterHistory.get(spotCounterHistory.size() - 1);
-            if (lastHistoryEntry.get("red") > spotCounter.get("red") && lastHistoryEntry.get("green") < spotCounter.get("green")) {
-                doStart = true;
-            }
+        if (framesWithoutMainCircle > MISSING_RED_LIGHT_LIMIT) {
+            log("***** START *****");
+            framesWithoutMainCircle = 0;
+            doStart = true;
         }
 
         return doStart;
@@ -109,16 +109,13 @@ public class Detector {
      * The counter and history for collecting the detected spots for both hue ranges are initialised also.
      */
     private void initializeHueRanges() {
-        Scalar[] redHueRange = new Scalar[]{new Scalar(160, 70, 20), new Scalar(190, 255, 255)};
-        Scalar[] greenHueRange = new Scalar[]{new Scalar(40, 100, 20), new Scalar(80, 255, 255)};
+        Scalar[] redHueRange = new Scalar[]{new Scalar(165, 80, 80), new Scalar(185, 255, 255)};
 
         hueRanges = new HashMap<>();
         hueRanges.put("red", redHueRange);
-        hueRanges.put("green", greenHueRange);
 
         spotCounter = new HashMap<>();
         spotCounter.put("red", 0);
-        spotCounter.put("green", 0);
 
         spotCounterHistory = new ArrayList<>();
     }
@@ -126,17 +123,70 @@ public class Detector {
     /**
      * Marks circles in the provided image object.
      *
-     * @param image   The image to mark circles in
-     * @param circles The circles to mark
+     * @param image       The image to mark circles in
+     * @param circles     The circles to mark
+     * @param circleColor The color for drawing the circles
      */
-    private void markCircles(Mat image, Mat circles) {
+    private void markCircles(Mat image, Mat circles, Scalar circleColor) {
         if (!circles.empty()) {
             for (int col = 0; col < circles.cols(); col++) {
                 double[] circle = circles.get(0, col);
+                String circleIdentifier = getCircleIdentifier(circle);
+                addCircle(circleIdentifier);
                 Point center = new Point(circle[0], circle[1]);
-                Core.circle(image, center, (int) circle[2], new Scalar(255, 0, 0), 2);
+                Core.circle(image, center, (int) circle[2], circleColor, 2);
             }
         }
+    }
+
+    private void checkCircles(Mat circles) {
+        boolean foundMainCircle = false;
+        Map.Entry<String, Integer> mainCircle = getMainCircle();
+
+        if (!circles.empty()) {
+            for (int col = 0; col < circles.cols(); col++) {
+                double[] circle = circles.get(0, col);
+                String circleIdentifier = getCircleIdentifier(circle);
+                addCircle(circleIdentifier);
+
+                if (mainCircle != null) {
+                    foundMainCircle = foundMainCircle || circleIdentifier.equals(mainCircle.getKey());
+                }
+            }
+        }
+
+        if (foundMainCircle) {
+            framesWithoutMainCircle = 0;
+        } else if (mainCircle != null && mainCircle.getValue() > MAIN_CIRCLE_LOWER_LIMIT) {
+            framesWithoutMainCircle++;
+        }
+    }
+
+    private String getCircleIdentifier(double[] circle) {
+        long x = Math.round(circle[0] / 10.0) * 10;
+        long y = Math.round(circle[1] / 10.0) * 10;
+
+        return x + "," + y;
+    }
+
+    private void addCircle(String circleIdentifier) {
+        int newCircleCount = 1;
+
+        if (circles.containsKey(circleIdentifier)) {
+            newCircleCount = circles.get(circleIdentifier) + 1;
+        }
+
+        circles.put(circleIdentifier, newCircleCount);
+    }
+
+    private Map.Entry<String, Integer> getMainCircle() {
+        Map.Entry<String, Integer> mainCircle = null;
+        for (Map.Entry<String, Integer> entry : circles.entrySet()) {
+            if (mainCircle == null || entry.getValue() > mainCircle.getValue()) {
+                mainCircle = entry;
+            }
+        }
+        return mainCircle;
     }
 
     /**
@@ -161,4 +211,5 @@ public class Detector {
             System.out.println(message);
         }
     }
+
 }

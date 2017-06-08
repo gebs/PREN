@@ -96,7 +96,7 @@ public class Util {
     }
 
     /**
-     * Converts an image in HSV format to RGB format and returns the converted rgb Mat
+     * Converts an image in HSV format to RGB format and returns the converted rgb Mat.
      *
      * @param raw HSV input image
      * @return converted RGB image
@@ -105,6 +105,18 @@ public class Util {
         Mat rgbImage = new Mat();
         Imgproc.cvtColor(raw, rgbImage, Imgproc.COLOR_HSV2RGB);
         return rgbImage;
+    }
+
+    /**
+     * Converts an image in HSV format to BGR format and returns the converted bgr Mat.
+     *
+     * @param raw HSV input image
+     * @return converted BGR image
+     */
+    public static Mat hsvToBgr(Mat raw) {
+        Mat bgrImage = new Mat();
+        Imgproc.cvtColor(raw, bgrImage, Imgproc.COLOR_HSV2BGR);
+        return bgrImage;
     }
 
     public static void showImage(String title, Mat image) {

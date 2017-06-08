@@ -19,7 +19,7 @@ import java.net.URL;
 
 public class StartRecognition {
 
-    private boolean runCamera = true;
+    private boolean runCamera = false;
     private boolean runDebugger = false;
 
     private JsonHandler jsonHandler;
@@ -30,8 +30,8 @@ public class StartRecognition {
 
     private final static int PI_IMAGE_FULL_WIDTH = 640;
     private final static int PI_IMAGE_FULL_HEIGHT = 480;
-    private final static float PI_IMAGE_DEFAULT_CROPPING_FACTOR_X = 0.5f;
-    private final static float PI_IMAGE_DEFAULT_CROPPING_FACTOR_Y = 0.5f;
+    private final static float PI_IMAGE_DEFAULT_CROPPING_FACTOR_X = 1.0f;
+    private final static float PI_IMAGE_DEFAULT_CROPPING_FACTOR_Y = 1.0f;
 
     /**
      * This method initializes the process of start signal detection
@@ -67,7 +67,7 @@ public class StartRecognition {
      * Based on the dimensions in this json file a Rectangle object is created and stored in an instance variable.
      */
     private Rect getCroppingRectangle() {
-        if (croppingRectangle != null) {
+        if (croppingRectangle == null) {
             int x, y, width, height;
 
             if (jsonHandler.hasValidFile()) {
@@ -81,11 +81,12 @@ public class StartRecognition {
                 }
 
                 if (y + height > PI_IMAGE_FULL_HEIGHT) {
-                    height = PI_IMAGE_FULL_HEIGHT - x;
+                    height = (PI_IMAGE_FULL_HEIGHT - y);
                 }
 
-                String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
-                log(logMessage, LogLevel.INFO);
+                //String logMessage = "Cropping Rect: x:" + x + " y:" + y + " | " + width + "x" + height;
+                //log(logMessage, LogLevel.INFO);
+
             } else {
                 x = 0;
                 y = 0;
@@ -110,25 +111,13 @@ public class StartRecognition {
         }
 
         Mat frame = new Mat();
-        Mat rgbImage = new Mat();
         Mat workingFrame;
         boolean doRun = false;
 
         while (!doRun) {
             camera.read(frame);
-            Imgproc.cvtColor(frame, rgbImage, Imgproc.COLOR_BGR2RGB);
-
-            if (runDebugger) {
-                debugger.log(rgbImage, ImageType.ORIGINAL, LogLevel.DEBUG);
-            }
-
             workingFrame = (getCroppingRectangle() != null) ? frame.submat(getCroppingRectangle()) : frame;
-
             doRun = detector.detect(workingFrame);
-
-            if (runDebugger) {
-                debugger.log(workingFrame, ImageType.EDITED, LogLevel.DEBUG);
-            }
         }
 
         camera.release();
@@ -136,12 +125,16 @@ public class StartRecognition {
     }
 
     private void runStatic() {
-        String basePathStart = "/Images/startTest/test_";
+        int testSeries = 2;
+        int imageCount = 12;
+
+        String basePathStart = "/Images/startTest" + testSeries + "/test_";
         String basePathEnd = ".png";
 
-        URL[] urls = new URL[38];
 
-        for (int i = 1; i <= 38; i++) {
+        URL[] urls = new URL[imageCount];
+
+        for (int i = 1; i <= imageCount; i++) {
             urls[i - 1] = this.getClass().getResource(basePathStart + i + basePathEnd);
         }
 
@@ -157,11 +150,11 @@ public class StartRecognition {
             File file = new File(url.getFile());
             Mat frame = Highgui.imread(file.getAbsolutePath());
 
-            log("Image #" + counter++);
+            log("Image #" + counter);
 
             workingFrame = (getCroppingRectangle() != null) ? frame.submat(getCroppingRectangle()) : frame;
 
-            doStart = detector.detect(workingFrame);
+            doStart = detector.detect(workingFrame, counter++);
 
             log("");
         }

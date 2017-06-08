@@ -11,6 +11,8 @@ import java.util.*;
 public class Display {
 
     private static Display instance;
+    private Thread thread;
+    private PittPattern pattern;
 
     final private static Pin LED1_PIN = RaspiPin.GPIO_24;
     final private static Pin LED2_PIN = RaspiPin.GPIO_25;
@@ -65,53 +67,28 @@ public class Display {
         }
     }
 
-    public void showStartPattern() {
-        flash(3);
-        showPattern = true;
-
-        GpioPinDigitalOutput[] leds = new GpioPinDigitalOutput[]{led1, led2, led3, led4, led5};
-
-        List<int[]> states = new ArrayList<>(Arrays.asList(
-                new int[]{1},
-                new int[]{1, 2},
-                new int[]{1, 2, 3},
-                new int[]{2, 3, 4},
-                new int[]{3, 4, 5},
-                new int[]{4, 5},
-                new int[]{5},
-                new int[]{4, 5},
-                new int[]{3, 4, 5},
-                new int[]{2, 3, 4},
-                new int[]{1, 2, 3},
-                new int[]{1, 2},
-                new int[]{1}
-        ));
-
-        while (showPattern) {
-            turnAllLedsOff();
-            for (int[] state : states) {
-                for (int led : state) {
-                    leds[led].low();
-                }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    public GpioPinDigitalOutput[] getLedArray() {
+        return new GpioPinDigitalOutput[]{led1, led2, led3, led4, led5};
     }
 
-    private void stopStartPattern() {
-        showPattern = false;
-        flash(3);
+    public void showStartPattern() {
+        pattern = new PittPattern(this);
+        thread = new Thread(pattern);
+        thread.start();
+    }
+
+    public void stopStartPattern() {
+        if (thread != null) {
+            thread.interrupt();
+            flash(3);
+        }
     }
 
     public void flash(int flashCount) {
         for (int count = 0; count < flashCount; count++) {
             try {
                 turnAllLedsOn();
-                Thread.sleep(200);
+                Thread.sleep(100);
                 turnAllLedsOff();
                 Thread.sleep(100);
             } catch (InterruptedException e) {
