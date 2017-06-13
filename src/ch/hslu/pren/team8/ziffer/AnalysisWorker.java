@@ -37,7 +37,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
  * Created by gebs on 5/7/17.
  */
 public class AnalysisWorker implements Runnable {
-    private Debugger debugger = Debugger.getInstance(false);
+    private Debugger debugger = Debugger.getInstance(true);
     private Thread thread;
     private Mat srcImg;
     private List<RectanglePoints> rectanglepoints;

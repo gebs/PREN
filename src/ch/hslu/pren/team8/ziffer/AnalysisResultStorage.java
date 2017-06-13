@@ -19,9 +19,9 @@ public class AnalysisResultStorage {
     private static AnalysisResultStorage instance;
 
     private static final List<Integer> results = new ArrayList<Integer>();
-    private static final int ENOUGHT_RESULTS = 20;
-    private static final int ENOUGHT_TIME = 60;
-    private static Debugger debugger = Debugger.getInstance(false);
+    private static final int ENOUGHT_RESULTS = 10;
+    private static final int ENOUGHT_TIME = 20;
+    private static Debugger debugger = Debugger.getInstance(true);
     private static long firstNumberTime = 0;
 
     public static AnalysisResultStorage getInstance() {
