@@ -60,6 +60,7 @@ public class AnalysisWorker implements Runnable {
 
         Mat persCorrect = PerspectiveCorrection(srcImg, points);
 
+        Util.saveImage(srcImg, "bla_");
 
         if (runCamera) {
             Imgproc.cvtColor(persCorrect, persCorrect, Imgproc.COLOR_BGR2RGB);
@@ -271,9 +272,9 @@ public class AnalysisWorker implements Runnable {
             skel = imread(basePath + random.toString() + "_thin.png", 0);
 
 
-            //f.delete();
+            f.delete();
             f = new File(basePath + random.toString() + "_thin.png");
-            //f.delete();
+            f.delete();
         }
         catch (IOException | InterruptedException e) {
             e.printStackTrace();

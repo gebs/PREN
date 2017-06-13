@@ -105,6 +105,7 @@ public class CommunicatorPi implements CommunicatorInterface {
      * @throws Exception If invalid digit value is provided
      */
     public void publishDigitRecognition(int detectedDigit) throws Exception {
+        System.out.println("RECOGNIZED: " + detectedDigit);
         Map<GpioPinDigitalOutput, PinState> signal;
         switch (detectedDigit) {
             case 1:
@@ -137,7 +138,6 @@ public class CommunicatorPi implements CommunicatorInterface {
      * @param signal The signal value to publish
      */
     public void publishSignal(Map<GpioPinDigitalOutput, PinState> signal) {
-
         for (Object o : signal.entrySet()) {
             Map.Entry pair = (Map.Entry) o;
 

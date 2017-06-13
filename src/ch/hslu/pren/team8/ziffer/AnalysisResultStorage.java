@@ -67,6 +67,7 @@ public class AnalysisResultStorage {
         debugger.log("Roman Number found: " + romanNumber, LogLevel.ERROR);
 
         try{
+            System.out.println("REC: " + romanNumber);
             CommunicatorPi.getInstance().publishDigitRecognition(romanNumber);
         }catch (Exception ex){
             ex.printStackTrace();

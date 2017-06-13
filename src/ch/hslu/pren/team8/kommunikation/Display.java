@@ -60,6 +60,7 @@ public class Display {
      * @param digit the digit to display
      */
     public void showDigit(int digit) {
+        System.out.println("SHOW DIGIT: " + digit);
         flash(3);
         ArrayList<GpioPinDigitalOutput> activeLeds = getActiveLeds(digit);
         for (GpioPinDigitalOutput led : activeLeds) {
