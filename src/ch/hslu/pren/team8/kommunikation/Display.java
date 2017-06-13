@@ -59,7 +59,7 @@ public class Display {
      *
      * @param digit the digit to display
      */
-    public void showDigit(int digit) {
+    public synchronized void showDigit(int digit) {
         System.out.println("SHOW DIGIT: " + digit);
         flash(3);
         ArrayList<GpioPinDigitalOutput> activeLeds = getActiveLeds(digit);
@@ -86,6 +86,7 @@ public class Display {
     }
 
     public void flash(int flashCount) {
+        System.out.println("FLASH " + flashCount + "x");
         for (int count = 0; count < flashCount; count++) {
             try {
                 turnAllLedsOn();
