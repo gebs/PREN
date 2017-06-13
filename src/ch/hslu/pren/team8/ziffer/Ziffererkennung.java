@@ -3,13 +3,8 @@ package ch.hslu.pren.team8.ziffer;
 import ch.hslu.pren.team8.debugger.Debugger;
 import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
+import org.opencv.core.*;
+import org.opencv.core.Point;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
@@ -101,6 +96,7 @@ public class Ziffererkennung {
 
         Mat redmask = getRedMask(optiimage);
 
+        debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
 
         ArrayList<Rect> foundRectangles = new ArrayList<>();
         ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
@@ -108,6 +104,7 @@ public class Ziffererkennung {
         findBoundingBox(redmask, foundRectangles, rectanglepoints);
 
         if (rectanglepoints.size() > 1) {
+            debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
             //debugger.log("Enought Rectangles found starting analysis Worker",LogLevel.ERROR);
             new AnalysisWorker(img, rectanglepoints, runCamera);
         }
@@ -165,9 +162,8 @@ public class Ziffererkennung {
             Imgproc.approxPolyDP(contour2f, approxcurve, approxdistance, true);
             MatOfPoint points = new MatOfPoint(approxcurve.toArray());
 
-            Rect te = Imgproc.boundingRect(points);
-
-
+            Rect rect = Imgproc.boundingRect(points);
+            Core.rectangle(img, new Point(rect.x,rect.y), new Point(rect.x+rect.width,rect.y+rect.height), new Scalar(255, 0, 0, 255), 3);
             rectanglepoints.add(new RectanglePoints(++id, approxcurve));
 
 

@@ -60,8 +60,6 @@ public class AnalysisWorker implements Runnable {
 
         Mat persCorrect = PerspectiveCorrection(srcImg, points);
 
-        Util.saveImage(srcImg, "bla_");
-
         if (runCamera) {
             Imgproc.cvtColor(persCorrect, persCorrect, Imgproc.COLOR_BGR2RGB);
         }
