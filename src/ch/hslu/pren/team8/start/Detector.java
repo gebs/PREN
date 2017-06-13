@@ -49,17 +49,13 @@ public class Detector {
         return instance;
     }
 
-    public boolean detect(Mat inputImage) {
-        return detect(inputImage, 0);
-    }
-
     /**
      * Detect circles of specific colors in the provided input image
      *
      * @param inputImage The input image to be processed
      * @return true if the start signal was detected
      */
-    public boolean detect(Mat inputImage, int imgIndex) {
+    public boolean detect(Mat inputImage) {
         boolean doStart = false;
 
         // convert input image to HSV

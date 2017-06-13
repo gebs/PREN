@@ -154,7 +154,7 @@ public class StartRecognition {
 
             workingFrame = (getCroppingRectangle() != null) ? frame.submat(getCroppingRectangle()) : frame;
 
-            doStart = detector.detect(workingFrame, counter++);
+            doStart = detector.detect(workingFrame);
 
             log("");
         }
