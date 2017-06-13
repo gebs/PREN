@@ -82,7 +82,7 @@ public class Debugger {
     public void log(Mat img, ImageType type, LogLevel logLevel) {
         if (img.size().height > 0 && img.size().width > 0) {
             Mat bgr = new Mat();
-            if (type == ImageType.ORIGINAL) {
+            if (type == ImageType.ORIGINAL && false) {
                 Imgproc.cvtColor(img, bgr, Imgproc.COLOR_BGR2RGB);
             }else{
                 bgr = img;

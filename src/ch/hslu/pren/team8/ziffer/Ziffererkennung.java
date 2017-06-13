@@ -32,7 +32,7 @@ public class Ziffererkennung {
 
     public void Start() {
 
-        runCamera = System.getProperty("user.name").equals("pi") || System.getProperty("user.name").equals("root");
+        runCamera = System.getProperty("user.name").equals("pi");
         debugger = Debugger.getInstance(runCamera);
         if (runCamera) {
             startWithCamera();
@@ -85,8 +85,8 @@ public class Ziffererkennung {
         debugger.log(img,ImageType.ORIGINAL,LogLevel.DEBUG);
         Mat rgbImage = new Mat();
 
-        if (runCamera) {
-            //Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+        if (runCamera && false) {
+            Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
         }
         else {
             rgbImage = img;
@@ -163,7 +163,9 @@ public class Ziffererkennung {
             MatOfPoint points = new MatOfPoint(approxcurve.toArray());
 
             Rect rect = Imgproc.boundingRect(points);
-            Core.rectangle(img, new Point(rect.x,rect.y), new Point(rect.x+rect.width,rect.y+rect.height), new Scalar(255, 0, 0, 255), 3);
+            if (rect.height < 20){
+                continue;
+            }
             rectanglepoints.add(new RectanglePoints(++id, approxcurve));
 
 
