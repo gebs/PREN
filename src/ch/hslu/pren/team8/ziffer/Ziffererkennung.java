@@ -37,7 +37,7 @@ public class Ziffererkennung {
 
     public void Start() {
 
-        runCamera = System.getProperty("user.name").equals("pi");
+        runCamera = System.getProperty("user.name").equals("pi") || System.getProperty("user.name").equals("root");
         debugger = Debugger.getInstance(runCamera);
         if (runCamera) {
             startWithCamera();

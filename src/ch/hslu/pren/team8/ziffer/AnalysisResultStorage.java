@@ -71,13 +71,6 @@ public class AnalysisResultStorage {
         }catch (Exception ex){
             ex.printStackTrace();
         }
-
-        try {
-            Display.getInstance().showDigit(romanNumber);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
     }
 
 }
