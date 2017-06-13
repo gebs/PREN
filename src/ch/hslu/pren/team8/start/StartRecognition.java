@@ -7,6 +7,7 @@ import ch.hslu.pren.team8.debugger.LogLevel;
 import ch.hslu.pren.team8.kommunikation.CommunicatorInterface;
 import ch.hslu.pren.team8.kommunikation.CommunicatorNonPi;
 import ch.hslu.pren.team8.kommunikation.CommunicatorPi;
+import ch.hslu.pren.team8.kommunikation.Display;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -53,6 +54,9 @@ public class StartRecognition {
             communicator = CommunicatorNonPi.getInstance();
         } else {
             communicator = CommunicatorPi.getInstance();
+            Display display = Display.getInstance();
+            display.flash(3);
+            display.turnAllLedsOff();
         }
 
         if (runCamera) {

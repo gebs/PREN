@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class Detector {
 
-    public final static int MISSING_RED_LIGHT_LIMIT = 5;
+    public final static int MISSING_RED_LIGHT_LIMIT = 10;
     public final static int MAIN_CIRCLE_LOWER_LIMIT = 30;
     private static int framesWithoutMainCircle = 0;
     private static Map<String, Integer> circles = new HashMap<>();
@@ -78,7 +78,6 @@ public class Detector {
         }
 
         if (framesWithoutMainCircle > MISSING_RED_LIGHT_LIMIT) {
-            log("***** START *****");
             framesWithoutMainCircle = 0;
             doStart = true;
         }
