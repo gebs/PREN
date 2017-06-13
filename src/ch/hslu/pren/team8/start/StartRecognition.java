@@ -131,7 +131,6 @@ public class StartRecognition {
         String basePathStart = "/Images/startTest" + testSeries + "/test_";
         String basePathEnd = ".png";
 
-
         URL[] urls = new URL[imageCount];
 
         for (int i = 1; i <= imageCount; i++) {
