@@ -86,7 +86,7 @@ public class Ziffererkennung {
         Mat rgbImage = new Mat();
 
         if (runCamera) {
-            Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+            //Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
         }
         else {
             rgbImage = img;
