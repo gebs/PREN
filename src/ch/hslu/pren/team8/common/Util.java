@@ -8,6 +8,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -39,6 +40,12 @@ public class Util {
         return image;
 
     }
+    public static Mat bufferedImageToMat(BufferedImage bi) {
+        Mat mat = new Mat(bi.getHeight(), bi.getWidth(), CvType.CV_8UC3);
+        byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
+        mat.put(0, 0, data);
+        return mat;
+    }
 
     /**
      * Draws an Array of Rectangles onto an Mat Image
@@ -58,6 +65,12 @@ public class Util {
         for (Point p : points) {
             Core.circle(img, p, 2, new Scalar(255, 255, 0, 255));
         }
+    }
+
+    public static double distanceBtwPoints(Point a,Point b){
+        double xDiff = a.x - b.x;
+        double yDiff = a.y - b.y;
+        return Math.sqrt((xDiff * xDiff) + (yDiff * yDiff));
     }
 
     /**
@@ -133,6 +146,25 @@ public class Util {
         frame.setSize(400, 400);
         frame.add(panel);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    private static void displayImage(String title, Mat img2, Mat orginal){
+        displayImage(title,Util.toBufferedImage(img2),Util.toBufferedImage(orginal));
+    }
+    private static void displayImage(String title, Image img2, Image orginal) {
+        ImageIcon icon2 = new ImageIcon(img2);
+        ImageIcon icon = new ImageIcon(orginal);
+        JFrame frame = new JFrame(title);
+        frame.setSize(400, 400);
+        JLabel lbl2 = new JLabel(icon2);
+        JLabel lbl = new JLabel(icon);
+        JPanel panel = new JPanel();
+        panel.add(lbl2);
+        panel.add(lbl);
+
+        frame.add(panel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
     }

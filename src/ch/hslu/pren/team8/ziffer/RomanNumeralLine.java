@@ -16,6 +16,7 @@ public class RomanNumeralLine {
         this.pt2 = pt2;
     }
 
+
     public boolean isStraightLine() {
         return (angle < 100 && angle > 80);
     }
@@ -33,9 +34,17 @@ public class RomanNumeralLine {
     }
 
     public boolean isNear(Point npt1, Point npt2) {
-        double ofpt1 = Math.abs(pt1.x - npt1.x);
-        double ofpt2 = Math.abs(pt2.x - npt2.x);
+        double ofpt1 = Math.abs(getPt1().x - npt1.x);
+        double ofpt2 = Math.abs(getPt2().x - npt2.x);
 
         return (ofpt1 < 10 || ofpt2 < 10);
+    }
+
+    public Point getPt1() {
+        return pt1;
+    }
+
+    public Point getPt2() {
+        return pt2;
     }
 }

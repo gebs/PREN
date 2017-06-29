@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.core.Core.bitwise_or;
+import static org.opencv.core.Core.circle;
+import static org.opencv.core.Core.countNonZero;
 import static org.opencv.core.Core.inRange;
 import static org.opencv.core.Core.line;
 import static org.opencv.highgui.Highgui.imread;
@@ -42,11 +44,13 @@ public class AnalysisWorker implements Runnable {
     private Mat srcImg;
     private List<RectanglePoints> rectanglepoints;
     private boolean runCamera = true;
+    private String filename;
 
-    AnalysisWorker(Mat srcImg, List<RectanglePoints> points, boolean runCamera) {
+    AnalysisWorker(Mat srcImg, List<RectanglePoints> points, boolean runCamera, String filename) {
         this.srcImg = srcImg;
         this.rectanglepoints = points;
         this.runCamera = runCamera;
+        this.filename = filename;
 
         if (this.thread == null) {
             this.thread = new Thread(this);
@@ -56,34 +60,56 @@ public class AnalysisWorker implements Runnable {
 
     @Override
     public void run() {
+
+
         ArrayList<RectanglePoints> points = findEdgePoints(rectanglepoints);
+
 
         Mat persCorrect = PerspectiveCorrection(srcImg, points);
 
-        if (runCamera) {
+        //Util.saveImage(persCorrect, "persCorrect");
+
+        if (runCamera && false) {
             Imgproc.cvtColor(persCorrect, persCorrect, Imgproc.COLOR_BGR2RGB);
         }
+
+        debugger.log(persCorrect, ImageType.EDITED, LogLevel.ERROR);
 
         Mat rdtest = new Mat();
         Imgproc.cvtColor(persCorrect, rdtest, COLOR_BGR2HSV);
 
         Mat redmask2 = getRedMask(rdtest);
 
+        //        debugger.log(redmask2, ImageType.EDITED, LogLevel.ERROR);
+
         persCorrect.setTo(new Scalar(255, 255, 255), redmask2);
 
-        Mat binaryImage = convertToBW(persCorrect);
+        //  debugger.log(persCorrect, ImageType.EDITED, LogLevel.ERROR);
 
-        debugger.log(binaryImage, ImageType.EDITED, LogLevel.ERROR);
+        Mat binaryImage = convertToBW(persCorrect, 100);
+
+        if (countNonZero(binaryImage) > 20000) {
+            binaryImage = convertToBW(persCorrect, 50);
+        }
+
+
+       // Util.saveImage(binaryImage, "Binary");
+        //    debugger.log(binaryImage, ImageType.EDITED, LogLevel.ERROR);
 
         Mat skel = generateSkel(binaryImage);
+       // Util.saveImage(skel, "Skel");
+        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 30);//40
 
-        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 40);
-
+        for (RomanNumeralLine line : lines) {
+            line(skel, line.getPt1(), line.getPt2(), new Scalar(255, 255, 255), 1);
+        }
+        //Util.saveImage(skel, "Lines");
         int foundNumber = getRomanNumeralNumber(lines);
 
         debugger.log("Found Number: " + foundNumber, LogLevel.ERROR);
 
         if (foundNumber != 0) {
+            System.out.println(filename);
             AnalysisResultStorage.getInstance().put(foundNumber);
         }
 
@@ -92,6 +118,7 @@ public class AnalysisWorker implements Runnable {
 
     /**
      * Erzeugt eine Maske mit den Rot-Bereichen des Bildes
+     *
      * @param hsv_img Ein Bild im HSV Farbschema
      * @return Maske als BinaryImage
      */
@@ -100,8 +127,8 @@ public class AnalysisWorker implements Runnable {
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
-        inRange(hsv_img, new Scalar(0, 150, 50), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(170, 65, 50), new Scalar(180, 255, 255), redmask2);
+        inRange(hsv_img, new Scalar(0, 130, 40), new Scalar(10, 255, 255), redmask1);
+        inRange(hsv_img, new Scalar(155, 38, 45), new Scalar(185, 255, 255), redmask2);
 
         Mat retVal = new Mat();
         bitwise_or(redmask1, redmask2, retVal);
@@ -228,14 +255,14 @@ public class AnalysisWorker implements Runnable {
         return scaled;
     }
 
-    private Mat convertToBW(Mat srcImg) {
+    private Mat convertToBW(Mat srcImg, int thresh) {
         Mat bgrimg = new Mat();
         Imgproc.cvtColor(srcImg, bgrimg, Imgproc.COLOR_HSV2BGR);
         Mat gray = new Mat();
         Imgproc.cvtColor(bgrimg, gray, Imgproc.COLOR_BGR2GRAY);
 
         Mat binaryImage = new Mat();
-        threshold(gray, binaryImage, 65, 255, THRESH_BINARY_INV);
+        threshold(gray, binaryImage, thresh, 255, THRESH_BINARY_INV);
 
         Imgproc.erode(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
         Imgproc.dilate(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
@@ -286,7 +313,7 @@ public class AnalysisWorker implements Runnable {
         bitwise_not(result, result);
         Mat lines = new Mat();
         List<RomanNumeralLine> rnlines = new ArrayList<>();
-        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, image.size().height / 4, 60);
+        Imgproc.HoughLinesP(image, lines, rho, theta, threshold, image.size().height / 5, 60);
         for (int i = 0; i < lines.cols(); i++) {
             double data[] = lines.get(0, i);
             Point pt1, pt2;

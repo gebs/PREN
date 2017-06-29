@@ -9,5 +9,6 @@ public class MainZiffer {
     public static void main(String[] args) {
         Ziffererkennung ze = new Ziffererkennung();
         ze.Start();
+
     }
 }

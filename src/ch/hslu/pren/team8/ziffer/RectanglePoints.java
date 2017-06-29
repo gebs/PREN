@@ -4,6 +4,9 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by gebs on 3/16/17.
  */
@@ -35,6 +38,14 @@ class RectanglePoints {
     PointPosition getPosition(){return position;}
     void setPoints(MatOfPoint2f _points){
         this.points = points;
+    }
+    void addPoints(MatOfPoint2f _points){
+        List<Point> pts = new ArrayList<Point>();
+        pts.addAll(this.points.toList());
+        List<Point> pts2 = _points.toList();
+        pts.addAll(pts2);
+        this.points.fromList(pts);
+
     }
     Point getPoint(){return point;}
 

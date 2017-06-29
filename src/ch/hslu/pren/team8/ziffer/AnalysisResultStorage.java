@@ -8,6 +8,7 @@ import ch.hslu.pren.team8.kommunikation.Display;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -20,7 +21,7 @@ public class AnalysisResultStorage {
 
     private static final List<Integer> results = new ArrayList<Integer>();
     private static final int ENOUGHT_RESULTS = 10;
-    private static final int ENOUGHT_TIME = 20;
+    private static final int ENOUGHT_TIME = 55;
     private static Debugger debugger = Debugger.getInstance(true);
     private static long firstNumberTime = 0;
 
@@ -41,14 +42,15 @@ public class AnalysisResultStorage {
         synchronized (results) {
             if (!hasEnoughtResults()) {
                 results.add(result);
-                if (firstNumberTime == 0) {
-                    firstNumberTime = System.currentTimeMillis();
-                }
             }
         }
     }
 
     boolean hasEnoughtResults() {
+        if (firstNumberTime == 0) {
+            firstNumberTime = System.currentTimeMillis();
+        }
+
         return results.size() >= ENOUGHT_RESULTS || ((((System
                 .currentTimeMillis() - firstNumberTime) / 1000) >= ENOUGHT_TIME) && firstNumberTime != 0);
     }
@@ -64,12 +66,20 @@ public class AnalysisResultStorage {
                 .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
 
 
-        debugger.log("Roman Number found: " + romanNumber, LogLevel.ERROR);
+        if (romanNumber == 0) {
+            int randomNum = ThreadLocalRandom.current().nextInt(1, 6);
+            romanNumber = randomNum;
+            debugger.log("Roman Number generated: " + romanNumber, LogLevel.ERROR);
+        }
+        else {
+            debugger.log("Roman Number found: " + romanNumber, LogLevel.ERROR);
+        }
 
-        try{
+        try {
             System.out.println("REC: " + romanNumber);
             CommunicatorPi.getInstance().publishDigitRecognition(romanNumber);
-        }catch (Exception ex){
+        }
+        catch (Exception ex) {
             ex.printStackTrace();
         }
     }

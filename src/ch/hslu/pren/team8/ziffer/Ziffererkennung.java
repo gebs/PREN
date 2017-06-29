@@ -1,19 +1,18 @@
 package ch.hslu.pren.team8.ziffer;
 
+import ch.hslu.pren.team8.common.Util;
 import ch.hslu.pren.team8.debugger.Debugger;
-import ch.hslu.pren.team8.debugger.ImageType;
 import ch.hslu.pren.team8.debugger.LogLevel;
 import org.opencv.core.*;
-import org.opencv.core.Point;
 import org.opencv.highgui.VideoCapture;
-import org.opencv.imgproc.Imgproc;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import static org.opencv.core.Core.bitwise_or;
-import static org.opencv.core.Core.inRange;
+import static org.opencv.highgui.Highgui.CV_CAP_PROP_FRAME_HEIGHT;
+import static org.opencv.highgui.Highgui.CV_CAP_PROP_FRAME_WIDTH;
 import static org.opencv.highgui.Highgui.imread;
 
 /**
@@ -24,6 +23,7 @@ public class Ziffererkennung {
     private boolean runCamera = true;
     private Debugger debugger;
     private AnalysisResultStorage storage = AnalysisResultStorage.getInstance();
+    ThreadPoolExecutor executor;
 
 
     public Ziffererkennung() {
@@ -34,28 +34,35 @@ public class Ziffererkennung {
 
         runCamera = System.getProperty("user.name").equals("pi");
         debugger = Debugger.getInstance(runCamera);
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
+
         if (runCamera) {
-            startWithCamera();
+            startWithCamera(null);
         }
         else {
-            startWithFile();
+            startWithFiles();
         }
     }
 
-    private void startWithCamera() {
-        debugger.log("Program started with Camera",LogLevel.DEBUG);
+    private void startWithCamera(VideoCapture camera) {
+        debugger.log("Program started with Camera", LogLevel.DEBUG);
         //Init Kamera
-        VideoCapture camera = new VideoCapture(0);
+        if (camera == null) {
+            camera = new VideoCapture(0);
+            camera.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+            camera.set(CV_CAP_PROP_FRAME_WIDTH, 640);
 
+        }
 
         /* Wait till camera is online*/
         try {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         }
         catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+        int i = 1;
         while (runCamera) {
             if (!storage.hasEnoughtResults()) {
                 Mat frame = new Mat();
@@ -63,7 +70,10 @@ public class Ziffererkennung {
                 if (frame.size().height == 0) {
                     debugger.log("No Image from Camera", LogLevel.ERROR);
                 }
-                processImage(frame);
+                Util.saveImage(frame, "image_" + i);
+                if (executor.getActiveCount() != executor.getMaximumPoolSize()) {
+                    executor.execute(new DetectorWorker(frame, runCamera, ""));
+                }
             }
             else if (!storage.isProcessStarted()) {
                 storage.processResults();
@@ -71,125 +81,44 @@ public class Ziffererkennung {
             else {
                 runCamera = false;
             }
+
+            i++;
         }
+        shutdown();
     }
 
 
     private void startWithFile() {
-        Mat oimg = imread("resources/PI_IMage.png");
-        processImage(oimg);
-    }
-
-    private void processImage(Mat img) {
-      //  debugger.log("progstarted", LogLevel.DEBUG);
-        debugger.log(img,ImageType.ORIGINAL,LogLevel.DEBUG);
-        Mat rgbImage = new Mat();
-
-        if (runCamera && false) {
-            Imgproc.cvtColor(img, rgbImage, Imgproc.COLOR_BGR2RGB);
+        Mat oimg = imread(   "/home/gebs/Projects/PREN 2/PREN/resources/TestImages/image_22temp286000000.png");
+        if (executor.getActiveCount() != executor.getMaximumPoolSize()) {
+            executor.execute(new DetectorWorker(oimg, runCamera, ""));
         }
-        else {
-            rgbImage = img;
+        shutdown();
+    }
+
+    private void startWithFiles() {
+        File folder = new File("resources/TestImages");
+        for (File file : folder.listFiles()) {
+            Mat src = imread(file.getAbsolutePath());
+
+            executor.execute(new DetectorWorker(src, runCamera, file.getAbsolutePath()));
+
         }
 
-        Mat optiimage = optimizeImage(rgbImage);
-
-        Mat redmask = getRedMask(optiimage);
-
-        debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
-
-        ArrayList<Rect> foundRectangles = new ArrayList<>();
-        ArrayList<RectanglePoints> rectanglepoints = new ArrayList<>();
-
-        findBoundingBox(redmask, foundRectangles, rectanglepoints);
-
-        if (rectanglepoints.size() > 1) {
-            debugger.log(redmask,ImageType.EDITED,LogLevel.DEBUG);
-            //debugger.log("Enought Rectangles found starting analysis Worker",LogLevel.ERROR);
-            new AnalysisWorker(img, rectanglepoints, runCamera);
-        }
     }
 
-    private Mat optimizeImage(Mat oImage) {
-        // debugger.log("Optimize Image", LogLevel.DEBUG);
-        Mat hsv_img = new Mat();
-        Imgproc.medianBlur(oImage, oImage, 3);
-        Imgproc.cvtColor(oImage, hsv_img, Imgproc.COLOR_BGR2HSV);
-
-        return hsv_img;
-    }
-
-    private Mat getRedMask(Mat hsv_img) {
-        Mat redmask1 = new Mat();
-        Mat redmask2 = new Mat();
-
-        inRange(hsv_img, new Scalar(0, 150, 50), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(170, 65, 50), new Scalar(180, 255, 255), redmask2);
-
-        Mat retVal = new Mat();
-        bitwise_or(redmask1, redmask2, retVal);
-
-
-        //morphological opening (remove small objects from the foreground)
-        Imgproc.erode(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
-        Imgproc.dilate(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
-
-        //morphological closing (fill small holes in the foreground)
-        Imgproc.dilate(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
-        Imgproc.erode(retVal, retVal, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
-
-
-        return retVal;
-    }
-
-    private void findBoundingBox(Mat img, ArrayList<Rect> foundRectangles, ArrayList<RectanglePoints> rectanglepoints) {
-        Mat boundingBox = img.clone();
-        java.util.List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-
-        Imgproc.findContours(boundingBox, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_TC89_L1);
-
-        int id = 0;
-        for (MatOfPoint contour : contours) {
-            MatOfPoint2f approxcurve = new MatOfPoint2f();
-            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
-            double approxdistance = Imgproc.arcLength(contour2f, true) * 0.02;
-
-            if (approxdistance < 1) {
-                continue;
+    private void shutdown() {
+        try {
+            while (executor.getTaskCount() != executor.getCompletedTaskCount()) {
+                System.err.println("count=" + executor.getTaskCount() + "," + executor.getCompletedTaskCount());
+                Thread.sleep(1000);
             }
+            executor.shutdown();
 
-            Imgproc.approxPolyDP(contour2f, approxcurve, approxdistance, true);
-            MatOfPoint points = new MatOfPoint(approxcurve.toArray());
-
-            Rect rect = Imgproc.boundingRect(points);
-            if (rect.height < 20){
-                continue;
-            }
-            rectanglepoints.add(new RectanglePoints(++id, approxcurve));
-
-
-            foundRectangles.add(Imgproc.boundingRect(points));
+            executor.awaitTermination(60, TimeUnit.SECONDS);
         }
-     /*   debugger.log(foundRectangles.size() + " Rectangles found; " + rectanglepoints.size() + " Rectanglepoints
-     found",
-                LogLevel.DEBUG);*/
-    }
-
-    private static void displayImage(String title, Image img2, Image orginal) {
-        ImageIcon icon2 = new ImageIcon(img2);
-        ImageIcon icon = new ImageIcon(orginal);
-        JFrame frame = new JFrame(title);
-        frame.setSize(400, 400);
-        JLabel lbl2 = new JLabel(icon2);
-        JLabel lbl = new JLabel(icon);
-        JPanel panel = new JPanel();
-        panel.add(lbl2);
-        panel.add(lbl);
-
-        frame.add(panel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
