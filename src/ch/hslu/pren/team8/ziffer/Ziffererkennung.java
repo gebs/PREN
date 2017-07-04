@@ -70,7 +70,7 @@ public class Ziffererkennung {
                 if (frame.size().height == 0) {
                     debugger.log("No Image from Camera", LogLevel.ERROR);
                 }
-                Util.saveImage(frame, "image_" + i);
+              //  Util.saveImage(frame, "image_" + i);
                 if (executor.getActiveCount() != executor.getMaximumPoolSize()) {
                     executor.execute(new DetectorWorker(frame, runCamera, ""));
                 }
@@ -89,7 +89,7 @@ public class Ziffererkennung {
 
 
     private void startWithFile() {
-        Mat oimg = imread(   "/home/gebs/Projects/PREN 2/PREN/resources/TestImages/image_22temp286000000.png");
+        Mat oimg = imread(   "/home/gebs/Projects/PREN 2/PREN/resources/TestImages/image_30temp558000000.png");
         if (executor.getActiveCount() != executor.getMaximumPoolSize()) {
             executor.execute(new DetectorWorker(oimg, runCamera, ""));
         }

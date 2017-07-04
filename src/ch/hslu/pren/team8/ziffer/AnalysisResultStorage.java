@@ -60,12 +60,15 @@ public class AnalysisResultStorage {
         System.out.println("DONE");
 
         debugger.log("Processing Started", LogLevel.ERROR);
-        Map<Integer, Long> counts = results.stream().collect((Collectors.groupingBy(e -> e, Collectors.counting())));
+        int romanNumber = 0;
+        if (results.size() > 0) {
+            Map<Integer, Long> counts = results.stream()
+                    .collect((Collectors.groupingBy(e -> e, Collectors.counting())));
 
-        int romanNumber = counts.entrySet().stream()
-                .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+            romanNumber = counts.entrySet().stream()
+                    .max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
 
-
+        }
         if (romanNumber == 0) {
             int randomNum = ThreadLocalRandom.current().nextInt(1, 6);
             romanNumber = randomNum;

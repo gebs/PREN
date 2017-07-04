@@ -49,7 +49,7 @@ public class DetectorWorker implements Runnable {
         Mat optiimage = optimizeImage(srcimg);
 
         Mat redmask = getRedMask(optiimage);
-          Util.saveImage(redmask, "RedMask");
+        //  Util.saveImage(redmask, "RedMask");
 
         debugger.log(redmask, ImageType.EDITED, LogLevel.DEBUG);
 
@@ -110,12 +110,12 @@ public class DetectorWorker implements Runnable {
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
-        inRange(hsv_img, new Scalar(0, 120, 30), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(155, 37, 38), new Scalar(185, 255, 255), redmask2);
-      //  inRange(hsv_img, new Scalar(0, 130, 40), new Scalar(10, 255, 255), redmask1);
+       // inRange(hsv_img, new Scalar(0, 120, 30), new Scalar(10, 255, 255), redmask1);
+       // inRange(hsv_img, new Scalar(155, 37, 38), new Scalar(185, 255, 255), redmask2);
+        //inRange(hsv_img, new Scalar(0, 130, 40), new Scalar(10, 255, 255), redmask1);
       //  inRange(hsv_img, new Scalar(155, 38, 45), new Scalar(185, 255, 255), redmask2);
-        // inRange(hsv_img, new Scalar(0, 100, 100), new Scalar(10, 255, 255), redmask1);
-        // inRange(hsv_img, new Scalar(160, 100, 100), new Scalar(179, 255, 255), redmask2);
+         inRange(hsv_img, new Scalar(0, 100, 100), new Scalar(10, 255, 255), redmask1);
+         inRange(hsv_img, new Scalar(155, 100, 50), new Scalar(179, 255, 255), redmask2);
 
 
         Mat retVal = new Mat();

@@ -89,7 +89,7 @@ public class AnalysisWorker implements Runnable {
         Mat binaryImage = convertToBW(persCorrect, 100);
 
         if (countNonZero(binaryImage) > 20000) {
-            binaryImage = convertToBW(persCorrect, 50);
+            binaryImage = convertToBW(persCorrect, 60);
         }
 
 
@@ -97,8 +97,8 @@ public class AnalysisWorker implements Runnable {
         //    debugger.log(binaryImage, ImageType.EDITED, LogLevel.ERROR);
 
         Mat skel = generateSkel(binaryImage);
-       // Util.saveImage(skel, "Skel");
-        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 30);//40
+        // Util.saveImage(skel, "Skel");
+        List<RomanNumeralLine> lines = getHoughTransform(skel, 1, Math.PI / 180, 20);//40
 
         for (RomanNumeralLine line : lines) {
             line(skel, line.getPt1(), line.getPt2(), new Scalar(255, 255, 255), 1);
@@ -127,8 +127,8 @@ public class AnalysisWorker implements Runnable {
         Mat redmask1 = new Mat();
         Mat redmask2 = new Mat();
 
-        inRange(hsv_img, new Scalar(0, 130, 40), new Scalar(10, 255, 255), redmask1);
-        inRange(hsv_img, new Scalar(155, 38, 45), new Scalar(185, 255, 255), redmask2);
+        inRange(hsv_img, new Scalar(0, 120, 30), new Scalar(10, 255, 255), redmask1);
+        inRange(hsv_img, new Scalar(155, 37, 38), new Scalar(185, 255, 255), redmask2);
 
         Mat retVal = new Mat();
         bitwise_or(redmask1, redmask2, retVal);
@@ -324,7 +324,7 @@ public class AnalysisWorker implements Runnable {
             if (angle < 0) {
                 angle = angle + 180;
             }
-            if ((angle >= 10 || angle <= -10) && rnlines.stream().filter(rn -> rn.isNear(pt1, pt2)).count() == 0) {
+            if ((angle >= 10 || angle <= -10) && (angle >190 || angle < 170) && rnlines.stream().filter(rn -> rn.isNear(pt1, pt2)).count() == 0) {
                 rnlines.add(new RomanNumeralLine(angle, pt1, pt2));
             }
         }
